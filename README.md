@@ -31,6 +31,7 @@
         ```bash
         mkvirtualenv organelle    # if you want to run the project in an isolated environment 
         pip install -r requirements.txt
+        pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu # go to https://pytorch.org/get-started/locally/ and find proper command for your hardware
         pip install -e .
         ```
 4. Start your IDE _in the proper directory_
