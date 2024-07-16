@@ -4,6 +4,7 @@ from pathlib import Path
 from skimage import io,measure
 from organelle_measure.tools import batch_apply
 
+# %%
 def parse_meta_cell(name):
     """name is the stem of the ORGANELLE label image file."""
     if "1nmpp1" in name:
@@ -105,5 +106,52 @@ plt.figure()
 plt.hist(csv["effective-volume"],bins=20)
 plt.xlabel("size/microns")
 plt.savefig("binCell-after_EYrainbow_glu-0-5_field-0_histogram-microns.png")
+
+
+# %% for 2-label-on-1-organelle strains
+import pandas as pd
+from pathlib import Path
+from skimage import io,measure
+from batch_apply import batch_apply
+
+def parse_meta_cell(name):
+    """name is the stem of the ORGANELLE label image file."""
+    organelle = name.partition(f"_")[0]
+    field = name.partition("field-")[2]    
+    return {
+        "organelle":  organelle,
+        "field":      field,
+    }
+
+def measure1cell(path_in,path_out):
+    img_cell = io.imread(str(path_in))
+    name = Path(path_in).stem
+    meta = parse_meta_cell(name)
+    measured = measure.regionprops_table(
+                    img_cell,
+                    properties=('label','area','centroid','bbox','eccentricity')
+               )
+    result = meta | measured
+    df = pd.DataFrame(result)
+    df.rename(columns={'label':'idx-cell'},inplace=True)
+    df.to_csv(str(path_out),index=False)
+    return None
+
+# %%
+list_i = []
+list_o = []
+
+for path_i in Path("images/cell/2024-06-25_2colorDiploidMeasure").glob("*.tif"):
+    stem = path_i.stem
+    path_o = Path("data/2024-06-25_2colorDiploidMeasure")/f"cell_{stem.partition('_')[0]}_field-{stem.partition('field-')[2]}.csv"
+    list_i.append(path_i)
+    list_o.append(path_o)
+
+args = pd.DataFrame({
+    "path_in":   list_i,
+    "path_out":  list_o
+})
+# %%
+batch_apply(measure1cell,args)
 
 # %%

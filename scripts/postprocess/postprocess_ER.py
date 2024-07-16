@@ -57,3 +57,29 @@ args = pd.DataFrame({
     "path_out": list_o
 })
 batch_apply(postprocess_ER,args)
+
+
+# %% rebuttal dual labelled organlles
+def postprocess_ER(path_in,path_out):
+    img_in = io.imread(str(path_in))
+    img_in = (img_in>0.5)
+    io.imsave(
+        str(path_out),
+        util.img_as_ubyte(img_in)
+    )
+    return None
+
+list_i = []
+list_o = []
+
+for path_binary in Path("images/preprocessed/2024-06-25_2colorDiploidMeasure").glob(f"Probabilities_ER*.tif"):
+    path_output = Path("images/labelled/2024-06-25_2colorDiploidMeasure")/f"label-{path_binary.stem.partition('_')[2]}.tif"
+    list_i.append(path_binary)
+    list_o.append(path_output)
+args = pd.DataFrame({
+    "path_in":  list_i,
+    "path_out": list_o
+})
+# %%
+batch_apply(postprocess_ER,args)
+# %%
