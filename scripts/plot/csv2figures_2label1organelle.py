@@ -50,7 +50,17 @@ pivot_orga_bycell_mean = df_orga.loc[:,["organelle","field","idx-cell","camera",
 pivot_orga_bycell_nums = df_orga.loc[:,["organelle","field","idx-cell","camera","volume-micron"]].groupby(["organelle","field","idx-cell","camera"]).count()["volume-micron"]
 pivot_orga_bycell_totl = df_orga.loc[:,["organelle","field","idx-cell","camera","volume-micron"]].groupby(["organelle","field","idx-cell","camera"]).sum()["volume-micron"]
 
-pivot_orga_bycell = pd.DataFrame(index=pivot_orga_bycell_mean.index)
+index_bycell = pd.MultiIndex.from_tuples(
+	[
+		(*index,id_camera) 
+		for index in pivot_cell_bycell.index.to_list() 
+		for id_camera in df_orga.loc[df_orga["organelle"].eq(index[0]),"camera"].unique()
+	],
+	names=["organelle","field","idx-cell","camera"]
+)
+
+pivot_orga_bycell = pd.DataFrame(index=index_bycell)
+
 pivot_orga_bycell["mean"]  = pivot_orga_bycell_mean
 pivot_orga_bycell["count"] = pivot_orga_bycell_nums
 pivot_orga_bycell["total"] = pivot_orga_bycell_totl
@@ -61,3 +71,12 @@ pivot_orga_bycell.loc[:,"cell-area"]   = pivot_cell_bycell.loc[:,"area"]
 pivot_orga_bycell.loc[:,"cell-volume"] = pivot_cell_bycell.loc[:,"effective-volume"]
 
 df_bycell = pivot_orga_bycell.reset_index()
+
+for organelle in organelles:
+	plt.figure()
+	for camera in df_bycell.loc[df_bycell["organelle"].eq(organelle),"camera"]:
+		total1 = df_bycell[
+						df_bycell["organelle"].eq(organelle) 
+					  & df_bycell["camera"].eq(camera)
+					]
+
