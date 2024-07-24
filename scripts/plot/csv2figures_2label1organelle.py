@@ -75,6 +75,32 @@ organelle_names = {
     "MT": "Mitochondrion",
     "LD": "Lipid Droplet"
 }
+fluorescence_names = {
+	"PX": {
+		"DAPI": "mTagBFP2-SKL",
+		"FITC": "PEX1-2GFP",
+	},
+	"VO": {
+		"CFP" : "VPH1-mTFP1",
+		"FITC": "GFP-PHO8",
+	},
+	"ER": {
+		"FITC" : "SEC61-sfGFP",
+		"TRITC": "SS-mCherry-HDEL",
+	},
+	"GL": {
+		"TRITC": "CHS5-mCherry",
+		"YFP"  : "SEC7-mCitrine",
+	},
+	"MT": {
+		"FITC" : "COX4-GFP",
+		"TRITC": "TOM70-tdTomato",
+	},
+	"LD": {
+		"FITC" : "TGL3-GFP",
+		"TRITC": "ERG6-mCherry",
+	},
+}
 
 for organelle in organelles:
 	
@@ -108,49 +134,102 @@ for organelle in organelles:
 	stddevis = np.std(array_totals,axis=1)
 	normalized = (array_totals - averages.reshape((-1,1)))/stddevis.reshape((-1,1))
 
-	# KDE plot of raw data
-	xmin = array_totals[0].min()
-	xmax = array_totals[0].max()
-	ymin = array_totals[1].min()
-	ymax = array_totals[1].max()
-	X, Y = np.mgrid[xmin:xmax:100j, ymin:ymax:100j]
-	positions = np.vstack([X.ravel(), Y.ravel()])
-	kernel = scipy.stats.gaussian_kde(array_totals)
-	Z = np.reshape(kernel(positions).T, X.shape)
+	# Overlay of histogram
+	plt.rcParams['font.size'] = '20'
+	fig,ax = plt.subplots(constrained_layout=True)
+	plt.title(f"{organelle_names[organelle]} Total Size")
+	ax.hist(
+		normalized[0], 20, 
+		density=True, histtype='step',
+		label=f"{fluorescence_names[organelle][cameras[0]]}"
+	)
+	ax.hist(
+		normalized[1], 20, 
+		density=True, histtype='step',
+		label=f"{fluorescence_names[organelle][cameras[1]]}"
+	)
+	ax.legend(fontsize=16)
+	ax.set_xlabel("Normalized Organelle Volume")
+	ax.set_ylabel("Density")
 
-	plt.figure()
-	plt.title(f"{organelle_names[organelle]} Total Size\ncorrelation coefficient = {corr_coef[0,1]:.3f}")
-	plt.imshow(
-		np.rot90(Z), cmap=plt.cm.gist_earth_r,
-        extent=[xmin, xmax, ymin, ymax]
-	)
-	plt.scatter(
+	positions = [0.68,0.45,0.28,0.22] 
+	fsize = 12
+	if organelle == "ER":
+		positions = [0.78,0.46,0.2,0.15]
+		fsize = 10 
+	if organelle == "MT":
+		positions = [0.71,0.45,0.26,0.21]
+		fsize = 11 
+	inlet = fig.add_axes(positions)
+	inlet.scatter(
 		array_totals[0],array_totals[1],
-		s=2, c='k', marker='.',
+		s=10, facecolor='white',edgecolor=sns.color_palette('tab10')[0],
 	)
-	plt.xlabel(f"{cameras[0]} ($\\mu m^3$)")
-	plt.ylabel(f"{cameras[1]} ($\\mu m^3$)")
+	inlet.set_title(
+		f"$p_{{correlation}}$ = {corr_coef[0,1]:.3f}",
+		fontsize=fsize
+	)
+	inlet.set_xlabel(
+		f"{fluorescence_names[organelle][cameras[0]]} ($\\mu m^3$)",
+		fontsize=fsize
+	)
+	inlet.set_ylabel(
+		f"{fluorescence_names[organelle][cameras[1]]} ($\\mu m^3$)",
+		fontsize=fsize
+	)
+	# inlet.set_xticks(inlet.get_xticks())
+	inlet.set_xticklabels(inlet.get_xticks(), fontsize=fsize)
+	# inlet.set_yticks(inlet.get_xticks())
+	inlet.set_yticklabels(inlet.get_yticks(), fontsize=fsize)
+
 	plt.savefig(
-		f"plots/2labels1organelle/kde_totalsize_{organelle}.png",
+		f"plots/2labels1organelle/combined_totalsize_{organelle}.png",
 		dpi=600
 	)
 
-	plt.figure()
-	plt.title(f"{organelle_names[organelle]} Total Size\ncorrelation coefficient = {corr_coef[0,1]:.3f}")
-	plt.scatter(
-		array_totals[0],array_totals[1],
-		facecolor='white',edgecolor=sns.color_palette('tab10')[0],
-	)
-	plt.xlabel(f"{cameras[0]} ($\\mu m^3$)")
-	plt.ylabel(f"{cameras[1]} ($\\mu m^3$)")
-	plt.legend()
-	plt.savefig(
-		f"plots/2labels1organelle/scatter_totalsize_{organelle}.png",
-		dpi=600
-	)
 
-	break
+	# # KDE plot of raw data
+	# xmin = array_totals[0].min()
+	# xmax = array_totals[0].max()
+	# ymin = array_totals[1].min()
+	# ymax = array_totals[1].max()
+	# X, Y = np.mgrid[xmin:xmax:100j, ymin:ymax:100j]
+	# positions = np.vstack([X.ravel(), Y.ravel()])
+	# kernel = scipy.stats.gaussian_kde(array_totals)
+	# Z = np.reshape(kernel(positions).T, X.shape)
 
+	# plt.figure()
+	# plt.title(f"{organelle_names[organelle]} Total Size\ncorrelation coefficient = {corr_coef[0,1]:.3f}")
+	# plt.imshow(
+	# 	np.rot90(Z), cmap=plt.cm.gist_earth_r,
+    #     extent=[xmin, xmax, ymin, ymax], aspect="auto"
+	# )
+	# plt.scatter(
+	# 	array_totals[0],array_totals[1],
+	# 	s=2, c='k', marker='.',
+	# )
+	# plt.xlabel(f"{cameras[0]} ($\\mu m^3$)")
+	# plt.ylabel(f"{cameras[1]} ($\\mu m^3$)")
+	# plt.savefig(
+	# 	f"plots/2labels1organelle/kde_totalsize_{organelle}.png",
+	# 	dpi=600
+	# )
+
+	# # Scatter plot
+	# plt.figure()
+	# plt.title(f"{organelle_names[organelle]} Total Size\ncorrelation coefficient = {corr_coef[0,1]:.3f}")
+	# plt.scatter(
+	# 	array_totals[0],array_totals[1],
+	# 	facecolor='white',edgecolor=sns.color_palette('tab10')[0],
+	# )
+	# plt.xlabel(f"{cameras[0]} ($\\mu m^3$)")
+	# plt.ylabel(f"{cameras[1]} ($\\mu m^3$)")
+	# plt.savefig(
+	# 	f"plots/2labels1organelle/scatter_totalsize_{organelle}.png",
+	# 	dpi=600
+	# )
+
+	# # Scatter of counter number
 	# cameras = list(dict_counts.keys())
 	# array_counts = np.vstack((dict_counts[cameras[0]],dict_counts[cameras[1]]))
 	# plt.figure()
@@ -168,7 +247,7 @@ for organelle in organelles:
 	# 	dpi=600
 	# )
 
-
+	# # Scatter of average size
 	# cameras = list(dict_means.keys())
 	# array_means  = np.vstack((dict_means[cameras[0]],dict_means[cameras[1]]))
 	# plt.figure()
