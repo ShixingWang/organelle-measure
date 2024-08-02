@@ -113,25 +113,33 @@ df = df[df['diff/mean'].lt(200)]
 df.dropna(inplace=True)
 
 # %%
+plt.rcParams["figure.autolayout"]=True
+plt.rcParams['font.size'] = '14'
 by_organlle = df[["organelle","std/mean","diff/mean"]].groupby("organelle").mean()
 plt.figure()
-plt.errorbar(
-    np.arange(6),np.zeros(6),fmt='None',
-    yerr=by_organlle.loc[organelles,'std/mean'],
-    capsize=5,ecolor='k'
+plt.bar(
+    np.arange(6), by_organlle.loc[organelles,'std/mean'],
+    color='1', edgecolor='k', label="upper error"
 )
-plt.scatter(
-    np.arange(6),by_organlle.loc[organelles,"diff/mean"],
-    c='k'
+plt.bar(
+    np.arange(6), -by_organlle.loc[organelles,'std/mean'],
+    color='1', edgecolor='k', hatch='/', label="lower error"
 )
+# plt.scatter(
+#     np.arange(6),by_organlle.loc[organelles,"diff/mean"],
+#     c='k',marker="x", label="measured value"
+# )
+plt.legend(fontsize=14)
 plt.xticks(
     ticks=np.arange(6),
-    labels=organelles
+    labels=organelles,
+    fontsize=11
 )
-plt.xlabel("Organelle")
-plt.ylabel("Segmentation Error")
+plt.xlabel("Organelle",fontsize='20')
+plt.ylabel("Segmentation Error",fontsize='20')
 # plt.show()
-plt.savefig("plots/rebuttal_error/mcmcShankar_25-75_summary.png",dpi=300)
+plt.savefig("plots/rebuttal_error/mcmcShankar_25-75_bar.png",dpi=600)
+
 # %%
 for organelle in organelles:
     df_organelle = df[df["organelle"].eq(organelle)]

@@ -16,7 +16,7 @@ from organelle_measure.data import read_results
 
 # Global Variables
 plt.rcParams["figure.autolayout"]=True
-plt.rcParams['font.size'] = '26'
+plt.rcParams['font.size'] = '20'
 list_colors = {
     "glucose":     [1,2,3,4,0,5],
     "leucine":     [1,2,3,4,0],
@@ -46,6 +46,30 @@ experiments = {
 exp_names = experiments.keys()
 exp_names = list(exp_names)
 exp_folder = [experiments[i] for i in exp_names]
+
+perturbations = {
+    "glucose":     "Glucose Concentration",
+    "leucine":     "Leucine Concentration",
+    "cell size":   "Beta Estrodial Concentration",
+    "PKA pathway": "1-nm-pp1 Concentration",
+    "TOR pathway": "Rapamycin Concentration"
+}
+
+converts = {
+    "glucose":     lambda x: f"{x*2/100.:.2f}",
+    "leucine":     lambda x: f"{int(x)}",
+    "cell size":   lambda x: f"{int(x)}",
+    "PKA pathway": lambda x: f"{x/1000.:.1f}",
+    "TOR pathway": lambda x: f"{int(x)}",
+}
+
+units = {
+    "glucose":     "% m/v",
+    "leucine":     "mg/L",
+    "cell size":   "nM",
+    "PKA pathway": "$\\mu$M",
+    "TOR pathway": "mg/mL"
+}
 
 subfolders = [
     "EYrainbow_glucose",
@@ -276,6 +300,8 @@ plt.ylim(0,None)
 plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0)
 plt.savefig(f'data/mutual_information/entropy_klDivergence.png')
 plt.close()
+# The question from the review 2 is because I did not make legends to explain the meanings of 'x' and 'o' markers. The x markers are the real data (2% did have KL divergence of 0), while o markers are random shuffles from the same group. They should have a KL divergence from 2% experiment data, and a higher information entropy, which are indeed what we see.
+
 
 plt.figure(figsize=(20,12))
 g = sns.scatterplot(
@@ -606,14 +632,14 @@ for folder in subfolders:
         )
 
 # PCA 
-def make_pca_plots(experiment,property,groups=None,has_volume=False,is_normalized=False,non_organelle=False,saveto="./plots/"):
+def make_pca_plots(experiment,property,groups=None,has_volume=False,is_normalized=True,non_organelle=False,saveto="./plots/"):
     for pca_subfolder in [ "pca_data/",
                            "pca_compare/",
                            "pca_projection_extremes/",
                            "pca_projection_all_plt/",
                            "pca_projection_all/"
                          ]:
-        if not (Path(saveto)/pca_subfolder).exists():
+        if saveto is not None and not (Path(saveto)/pca_subfolder).exists():
             (Path(saveto)/pca_subfolder).mkdir()
         continue
     folder = experiments[experiment]
@@ -641,6 +667,9 @@ def make_pca_plots(experiment,property,groups=None,has_volume=False,is_normalize
             df_pca[col] = (df_pca[col]-df_pca[col].mean())/df_pca[col].std()
     
     df_pca.reset_index(inplace=True)
+
+    if saveto is None:
+        return df_pca
 
     # Find the the direction of the condition change:
     df_centroid = df_pca.groupby("condition")[columns].mean()
@@ -863,7 +892,7 @@ def make_pca_plots(experiment,property,groups=None,has_volume=False,is_normalize
         )
     )
     figproj.write_html(f'{Path(f"{saveto}/pca_projection_all")}/pca_projection3d_{folder}_{name}_pc{"".join([str(p) for p in pc2proj])}.html')
-    return None
+    return df_pca
 
 for experiment in exp_names:
     make_pca_plots(experiment,"total-fraction",groups=extremes[experiments[experiment]],has_volume=False,is_normalized=True,non_organelle=False,saveto="plots/PCA_review_20240403")
@@ -924,6 +953,51 @@ fig_summary = px.imshow(
 )
 fig_summary.write_html(f'{saveto}/pca_compare/summary_cosine.html')
 
+
+# superplot (a box and whisker with the individual datapoints overlaid on top)
+# of normalized volume fractions for each organelle for each set of perturbations
+# (for each organelle make a plot that overlays all the glucose normalized vol frac distributions, 
+# for each organelle make another plot that overlays all the leucine normalized vol frac distributions, etc) 
+for experiment in experiments:
+    df_pca = make_pca_plots(
+        experiment=experiment,
+        property="total-fraction",
+        groups=None,
+        has_volume=False,
+        is_normalized=True,
+        non_organelle=False,
+        saveto=None
+    )
+    for organelle in organelles:
+        normalizeds = []
+        conditions  = []
+        colors = []
+        for c,condition in enumerate(np.sort(df_pca["condition"].unique())):
+            normalizeds.append(df_pca.loc[df_pca["condition"].eq(condition),organelle])
+            conditions.append(converts[experiment](condition))
+            colors.append(sns.color_palette("tab10")[list_colors["glucose"][c]])
+        
+        fig, ax = plt.subplots()
+        bplot = ax.boxplot(
+                    normalizeds,
+                    showfliers=False,
+                    patch_artist=True,
+                    labels=conditions,
+                    medianprops={"color":'k'}
+                )
+        for (patch,color) in zip(bplot['boxes'], colors):
+            patch.set_facecolor(color)
+
+        for n,normalized in enumerate(normalizeds):
+            ax.scatter(
+                n + 1 - 0.15 + 0.3*np.random.random(size=len(normalized)),
+                normalized,
+                s=2,color=colors[n],alpha=0.3
+            )
+        ax.set_title(f"{' '.join([s if s.isupper() else s.title() for s in experiment.split()])} Perturbation\n{organelle if organelle.isupper() else organelle.title()}")
+        ax.set_ylabel("Normalized Volume Fraction")
+        ax.set_xlabel(f"{perturbations[experiment]} ({units[experiment]})")
+        plt.savefig(f"plots/normalized_volume_fraction/normalizedVolFraction_{experiment}_{organelle}.png",dpi=600)
 
 # power law
 import numpy as np

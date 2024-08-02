@@ -1,6 +1,8 @@
 import h5py
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 from pathlib import Path
 
 
@@ -61,3 +63,69 @@ for subfolder in subfolders:
         print("...",entry_output["experiment"],entry_output["filename"])
 df_errors = pd.concat((df for df in list_output),ignore_index=True)
 df_errors.to_csv("data/image_error_probability_new.csv",index=False)
+
+
+# %% Plot segmentation error
+organelles = [
+    "peroxisome",
+    "vacuole",
+    "ER",
+    "golgi",
+    "mitochondria",
+    "LD"
+]
+experiments = {
+    "glucose":     "EYrainbow_glucose_largerBF",
+    "leucine":     "EYrainbow_leucine_large",
+    "cell size":   "EYrainbowWhi5Up_betaEstrodiol",
+    "PKA pathway": "EYrainbow_1nmpp1_1st",
+    "TOR pathway": "EYrainbow_rapamycin_1stTry"
+}
+exp_names = experiments.keys()
+exp_names = list(exp_names)
+exp_folder = [experiments[i] for i in exp_names]
+
+df_error = pd.read_csv("data/image_error_probability_new.csv")
+
+summary_error = df_error.groupby(["organelle","experiment"]).mean()
+summary_error.reset_index(inplace=True)
+
+plt.figure(figsize=(20,12))
+plt.rcParams['font.size'] = '26'
+bar_positions = {}
+for k,experiment in enumerate(exp_names):
+    bar_positions = np.arange(6) + (k+1.5)/(len(exp_names)+2.)
+    plt.bar(
+        x=bar_positions,
+        height=summary_error.loc[
+            summary_error["experiment"].eq(experiments[experiment]),
+            "error_upper"
+        ].values[[4,5,0,2,3,1]]*100,
+        width=1/(len(exp_names)+2.),
+        label=experiment,
+        color=sns.color_palette('tab10')[k],
+    )
+    print(summary_error.loc[
+            summary_error["experiment"].eq(experiments[experiment]),
+            "organelle"
+        ].values[[4,5,0,2,3,1]])
+for k,experiment in enumerate(exp_names):
+    bar_positions = np.arange(6) + (k+1.5)/(len(exp_names)+2.)
+    plt.bar(
+        x=bar_positions,
+        height= -summary_error.loc[
+            summary_error["experiment"].eq(experiments[experiment]),
+            "error_lower"
+        ].values[[4,5,0,2,3,1]]*100,
+        width=1/(len(exp_names)+2.),
+        color=sns.color_palette('tab10')[k],
+        alpha=0.5
+    )
+plt.axhline(color='k')
+plt.xticks(np.arange(6)+0.5,organelles)
+plt.xlabel("Organelle")
+plt.ylabel("Segmentation Error / %")
+plt.legend(loc=(1.04,0.5))
+plt.savefig("data/image_error.png")
+
+
