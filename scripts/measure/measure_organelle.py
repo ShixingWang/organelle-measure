@@ -6,6 +6,7 @@ from pathlib import Path
 from skimage import io,measure
 from batch_apply import batch_apply
 
+# %%
 def parse_meta_organelle(name):
     """name is the stem of the ORGANELLE label image file."""
     organelle = name.partition("-")[2].partition("_")[0]
@@ -192,7 +193,7 @@ folder_o = "./data/2024-06-25_2colorDiploidMeasure"
 list_i = []
 list_c = []
 list_o = []
-for path_c in (Path(folder_c)).glob("*.tif"):
+for path_c in (Path(folder_c)).glob("GL*.tif"):
     organelle = path_c.stem.partition("_"     )[0]
     field     = path_c.stem.partition("field-")[2]
     for path_i in Path(folder_i).glob(f"label-{organelle}*{field}.tif"):
@@ -209,6 +210,5 @@ args = pd.DataFrame({
 })
 # %%
 batch_apply(measure1organelle,args)
-
 
 # %%

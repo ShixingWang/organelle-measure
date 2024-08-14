@@ -143,4 +143,35 @@ args = pd.DataFrame({
 })
 # %%
 batch_apply(postprocess_vacuole,args)
+
+# %% rebuttal - manual segment
+def postprocess_vacuole(path_in,path_cell,path_out):
+    img_orga = io.imread(str(path_in))
+    img_orga = (img_orga>0)
+
+    img_cell = io.imread(str(path_cell))
+
+    img_skeleton  = skeletonize_zbyz(img_orga)
+
+    img_core      = find_complete_rings(img_skeleton)
+    
+    # img_vacuole   = better_vacuole_img(img_core,img_watershed)
+    img_vacuole = np.zeros_like(img_core,dtype=int)
+    for z in range(img_vacuole.shape[0]):
+        sample = img_core[z]
+        candidates = np.unique(sample[img_cell>0])
+        for color in candidates:
+            if len(np.unique(img_cell[sample==color]))==1:
+                img_vacuole[z,sample==color] = color
+
+    io.imsave(
+        str(path_out),
+        util.img_as_uint(img_vacuole) 
+    )
+    return None
+postprocess_vacuole(
+    "images/rebuttal_manual/equal_painted_vacuole_EYrainbow_glu-100_field-0_crop.tif",
+    "images/rebuttal_manual/binCell_EYrainbow_glu-100_field-0_crop.tif",
+    "images/rebuttal_manual/label_vacuole_EYrainbow_glu-100_field-0_crop.tif"
+)
 # %%

@@ -74,3 +74,17 @@ args = pd.DataFrame({
 batch_apply(postprocess_mito,args)
 
 # %%
+def postprocess_mito(path_in,path_out):
+    img_in = io.imread(str(path_in))
+    img_in = (img_in>0)
+    img_out = measure.label(img_in)
+    io.imsave(
+        str(path_out),
+        util.img_as_uint(img_out)
+    )
+    return None
+postprocess_mito(
+    "images/rebuttal_manual/equal_painted_mitochondria_EYrainbow_glu-100_field-0_crop.tif",
+    "images/rebuttal_manual/label_mitochondria_EYrainbow_glu-100_field-0_crop.tif"
+)
+# %%

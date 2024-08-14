@@ -179,23 +179,23 @@ for organelle in organelles:
     # 	fontsize=fsize
     # )
 
-    inlet.scatter(
-    	normalized[0],normalized[1],
-    	s=10, facecolor='white',edgecolor=sns.color_palette('tab10')[0],
-    )
-    inlet.set_title(
-    	f"$p_{{correlation}}$ = {corr_normed[0,1]:.3f}",
-    	fontsize=fsize
-    )
-
     # inlet.scatter(
-    #     maxed[0],maxed[1],
-    #     s=10, facecolor='white',edgecolor=sns.color_palette('tab10')[0],
+    # 	normalized[0],normalized[1],
+    # 	s=10, facecolor='white',edgecolor=sns.color_palette('tab10')[0],
     # )
     # inlet.set_title(
-    #     f"$p_{{correlation}}$ = {corr_maxed[0,1]:.3f}",
-    #     fontsize=fsize
+    # 	f"$p_{{correlation}}$ = {corr_normed[0,1]:.3f}",
+    # 	fontsize=fsize
     # )
+
+    inlet.scatter(
+        maxed[0],maxed[1],
+        s=10, facecolor='white',edgecolor=sns.color_palette('tab10')[0],
+    )
+    inlet.set_title(
+        f"$p_{{correlation}}$ = {corr_maxed[0,1]:.3f}",
+        fontsize=fsize
+    )
 
     inlet.set_xlabel(
         # f"{fluorescence_names[organelle][cameras[0]]} ($\\mu m^3$)",
@@ -217,15 +217,15 @@ for organelle in organelles:
     # 	dpi=600
     # )
 
-    plt.savefig(
-    	f"plots/2labels1organelle/combined-scatter-zscore_totalsize_{organelle}.png",
-    	dpi=600
-    )
-
     # plt.savefig(
-    #     f"plots/2labels1organelle/combined-scatter-maxed_totalsize_{organelle}.png",
-    #     dpi=600
+    # 	f"plots/2labels1organelle/combined-scatter-zscore_totalsize_{organelle}.png",
+    # 	dpi=600
     # )
+
+    plt.savefig(
+        f"plots/2labels1organelle/combined-scatter-maxed_totalsize_{organelle}.png",
+        dpi=600
+    )
 
 
 

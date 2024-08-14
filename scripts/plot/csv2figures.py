@@ -461,9 +461,23 @@ pivot_bycondition["cell_count"] = df_bycell[['folder','organelle','condition','m
 df_bycondition = pivot_bycondition.reset_index()
 
 # Growth Rates
-df_rates = pd.read_csv(str(Path("./data/growthrate")/"growth_rate.csv"))
-df_rates.rename(columns={"experiment":"folder"},inplace=True)
-df_rates.set_index(["folder","condition"],inplace=True)
+# # old data taken together with imaging
+# df_rates = pd.read_csv(str(Path("./plots/growthrate")/"growth_rate.csv"))
+# df_rates.rename(columns={"experiment":"folder"},inplace=True)
+# df_rates.set_index(["folder","condition"],inplace=True)
+
+# new data taken from deliberate replicates
+df_rate_replicate = pd.read_csv("plots/growthrate/rebuttal_OD_replicate.csv")
+df_rate_replicate["time"] = pd.to_datetime(df_rate_replicate["time"],format="%H:%M")
+first_times = df_rate_replicate[["group","replicate","time"]].groupby(["group","replicate"]).first()
+first_ODs = df_rate_replicate[["group","replicate","OD"]].groupby(["group","replicate"]).first()
+df_rate_replicate.set_index(["group","replicate"],inplace=True)
+df_rate_replicate["first_times"] = first_times
+df_rate_replicate["first_ODs"] = first_ODs
+df_rate_replicate["minute"] = (df_rate_replicate["time"] - df_rate_replicate["first_times"]).dt.total_seconds()/60.0
+df_rate_replicate["normalized"] = df_rate_replicate["OD"] / df_rate_replicate["first_ODs"]
+df_rate_replicate.reset_index(inplace=True)
+# not tested, not even remember what interfaces this new dataset gives
 
 df_entropies.set_index(["folder","condition"],inplace=True)
 df_entropies.loc[:,"growth_rate"] = df_rates["growth_rate"]

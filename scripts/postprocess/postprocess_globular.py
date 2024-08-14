@@ -93,7 +93,11 @@ def postprocess_globular(path_in,path_ref,path_out):
     )
     return None
 
-organelles = ["PX","LD","GL"]
+organelles = [
+    # "PX",
+    # "LD",
+    "GL"
+]
 
 list_i   = []
 list_ref = []
@@ -112,5 +116,40 @@ args = pd.DataFrame({
 })
 # %%
 batch_apply(postprocess_globular,args)
+
+# %% rebuttal - manual segmentation
+def postprocess_globular(path_in,path_ref,path_out):
+    img_in  = io.imread(str(path_in))
+    img_in  = (img_in>0)
+
+    img_ref = io.imread(str(path_ref))
+    
+    img_out = segmentation.watershed(-img_ref,mask=img_in)
+    io.imsave(
+        str(path_out),
+        util.img_as_uint(img_out)
+    )
+    return None
+# %%
+list_i   = []
+list_ref = []
+list_o   = []
+folder = Path("images/rebuttal_manual/")
+for organelle in ["peroxisome","golgi","LD"]:
+    path_binary = f"{folder}/equal_painted_{organelle}_EYrainbow_glu-100_field-0_crop.tif"
+    path_output = f"{folder}/label_{organelle}_EYrainbow_glu-100_field-0_crop.tif"
+    path_ref = f"{folder}/preprocessed_{organelle}_EYrainbow_glu-100_field-0_crop.tif"
+    list_i.append(path_binary)
+    list_ref.append(path_ref)
+    list_o.append(path_output)
+args = pd.DataFrame({
+    "path_in":  list_i,
+    "path_ref": list_ref,
+    "path_out": list_o
+})
+# %%
+batch_apply(postprocess_globular,args)
+
+
 
 # %%

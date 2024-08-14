@@ -9,7 +9,7 @@ import plotly.express as px
 from pathlib import Path
 from sklearn.linear_model import LinearRegression
 
-folder_i = Path("data/growthrate")
+folder_i = Path("plots/growthrate")
 
 subfolders = [
     "EYrainbow_glucose",

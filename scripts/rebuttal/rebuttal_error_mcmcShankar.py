@@ -192,4 +192,21 @@ downsample(new_down,img_prob)
 new_up = np.copy(img_mask)
 upsample(new_up,img_prob)
 
+# %% have a look at the variance of organelle volume fraction across same group of cells
+from organelle_measure.data import read_results
+px_x,px_y,px_z = 0.41,0.41,0.20
+
+df_bycell = read_results(Path("./data"),["EYrainbow_glucose_largerBF"],(px_x,px_y,px_z))
+
+# %%
+df_measure = df_bycell.loc[
+                df_bycell["condition"].eq(100)
+              & df_bycell["field"].eq(3)
+            ]
+# %%
+total_std = {}
+for organelle in organelles:
+    total_std[organelle] = df_measure.loc[df_measure["organelle"].eq(organelle),"total"].std()/(px_x * px_y * px_z)
+
+
 # %%

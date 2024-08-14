@@ -6,6 +6,8 @@ from pathlib import Path
 from skimage import io,util
 from organelle_measure.tools import skeletonize_zbyz,batch_apply
 
+
+# %%
 def postprocess_ER(path_in,path_out):
     with h5py.File(str(path_in)) as f_in:
         img_in = f_in["exported_data"][:]
@@ -82,4 +84,21 @@ args = pd.DataFrame({
 })
 # %%
 batch_apply(postprocess_ER,args)
+
+# %% rebuttal - manual segment
+def postprocess_ER(path_in,path_out):
+    img_in = io.imread(str(path_in))
+    img_in = (img_in>0)
+    img_ske = skeletonize_zbyz(img_in)
+    io.imsave(
+        str(path_out),
+        util.img_as_ubyte(img_ske)
+    )
+    return None
+
+postprocess_ER(
+    "images/rebuttal_manual/equal_painted_ER_EYrainbow_glu-100_field-0_crop.tif",
+    "images/rebuttal_manual/label_ER_EYrainbow_glu-100_field-0_crop.tif"
+)
+
 # %%
