@@ -109,15 +109,15 @@ csv_mcmc2575["diff/mean"] = csv_mcmc2575["diff"]/csv_mcmc2575["average"]
 csv_mcmc2575 = csv_mcmc2575[csv_mcmc2575['diff/mean'].lt(200)]
 csv_mcmc2575.dropna(inplace=True)
 
-for organelle in organelles:
-	# plt.figure()
-	# plt.title(organelle)
-	# plt.hist(
-	# 	csv_mcmc2575.loc[csv_mcmc2575['organelle'].eq(organelle),"std/mean"]
-	# )
-	# plt.show()
-	print(organelle)
-	print(f'{csv_mcmc2575.loc[csv_mcmc2575["organelle"].eq(organelle),"std/mean"].mean()}')
-	print(f'{csv_mcmc2575.loc[csv_mcmc2575["organelle"].eq(organelle),"std/mean"].std()**2}')
+# %%
+by_organlle = csv_mcmc2575[["organelle","std/mean","diff/mean"]].groupby("organelle").mean()
 
 # %%
+rng = np.random.default_rng()
+multiplier = rng.normal(loc=1.0,scale=0.1,size=100)
+# %%
+
+df_bycell = read_results(Path("./data"),subfolders,(px_x,px_y,px_z))
+# %%
+for t in range(1000):
+	continue
