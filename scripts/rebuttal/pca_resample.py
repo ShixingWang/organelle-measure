@@ -109,15 +109,139 @@ csv_mcmc2575["diff/mean"] = csv_mcmc2575["diff"]/csv_mcmc2575["average"]
 csv_mcmc2575 = csv_mcmc2575[csv_mcmc2575['diff/mean'].lt(200)]
 csv_mcmc2575.dropna(inplace=True)
 
-# %%
 by_organlle = csv_mcmc2575[["organelle","std/mean","diff/mean"]].groupby("organelle").mean()
+
+# %%
+df_bycell = read_results(Path("./data"),subfolders,(px_x,px_y,px_z))
+
+# %%
+def make_pca_plots(experiment,property,groups=None,has_volume=False,is_normalized=True,non_organelle=False,saveto="./plots/"):
+    for pca_subfolder in [ "pca_data/",
+                           "pca_compare/",
+                           "pca_projection_extremes/",
+                           "pca_projection_all_plt/",
+                           "pca_projection_all/"
+                         ]:
+        if saveto is not None and not (Path(saveto)/pca_subfolder).exists():
+            (Path(saveto)/pca_subfolder).mkdir()
+        continue
+    folder = experiments[experiment]
+    name = f"{'all-conditions' if groups is None else 'extremes'}_{'has-cytoplasm' if non_organelle else 'no-cytoplasm'}_{'cell-volume' if has_volume else 'organelle-only'}_{property}_{'norm-mean-std' if is_normalized else 'raw'}"
+    print("PCA Anaysis: ",folder,name)
+
+    df_orga_perfolder = df_bycell[df_bycell["folder"].eq(folder)]
+    df_orga_perfolder.set_index(["condition","field","idx-cell"],inplace=True)
+    idx = df_orga_perfolder.groupby(["condition","field","idx-cell"]).count().index
+    
+    columns = [*organelles,"non-organelle"] if non_organelle else organelles
+    df_pca = pd.DataFrame(index=idx,columns=columns)
+    num_pc = 7 if non_organelle else 6
+    
+    for orga in columns:
+        df_pca[orga] = df_orga_perfolder.loc[df_orga_perfolder["organelle"].eq(orga),property]
+    
+    if has_volume:
+        df_pca["cell-volume"] = df_orga_perfolder.loc[df_orga_perfolder["organelle"].eq("ER"),"cell volume"]
+        columns = ["cell volume",*columns]
+        num_pc += 1
+    
+    if is_normalized:
+        for col in columns:
+            df_pca[col] = (df_pca[col]-df_pca[col].mean())/df_pca[col].std()
+    
+    df_pca.reset_index(inplace=True)
+
+    if saveto is None:
+        return df_pca
+
+df_pca_raw = make_pca_plots(
+    experiment="glucose",
+    property="total-fraction",
+    groups=None,
+    has_volume=False,
+    is_normalized=False, # be careful of this
+    non_organelle=False,
+    saveto=None
+)
+
+# %% TODO: extract this into a function in organelle_measure/
+rng = np.random.default_rng()
+
+N = 1000
+centroids = np.zeros((N,6,6))     # (simulation, glucose condition  , organelle)
+pc_components = np.zeros((N,6,6)) # (simulation, principal component, organelle)
+for t in range(N):
+    df_pca = df_pca_raw.copy()
+    for o,organelle in enumerate(organelles):
+        multiplier = rng.normal(loc=1.0,scale=by_organlle.loc[organelle,"std/mean"],size=len(df_pca_raw))
+        df_pca.loc[:,organelle] = df_pca_raw.loc[:,organelle] * multiplier
+        df_pca[organelle] = (df_pca[organelle]-df_pca[organelle].mean())/df_pca[organelle].std()
+
+    df_centroid = df_pca.groupby("condition")[organelles].mean()
+
+    fitter_centroid = LinearRegression(fit_intercept=False)
+    np_centroid = df_centroid.to_numpy()
+    fitter_centroid.fit(np_centroid,np.ones(np_centroid.shape[0]))
+
+    vec_centroid_start = df_centroid.loc[extremes["EYrainbow_glucose_largerBF"][0],:].to_numpy()
+    vec_centroid_start[-1] = (1 - np.dot(fitter_centroid.coef_[:-1],vec_centroid_start[:-1]))/fitter_centroid.coef_[-1]
+
+    vec_centroid_ended = df_centroid.loc[extremes["EYrainbow_glucose_largerBF"][-1],:].to_numpy()
+    vec_centroid_ended[-1] = (1 - np.dot(fitter_centroid.coef_[:-1],vec_centroid_ended[:-1]))/fitter_centroid.coef_[-1]
+
+    vec_centroid = vec_centroid_ended - vec_centroid_start
+    vec_centroid = vec_centroid/np.linalg.norm(vec_centroid)
+
+
+    np_pca = df_pca[organelles].to_numpy()
+    pca = PCA(n_components=6)
+    pca.fit(np_pca)
+    pca_components = pca.components_
+
+    centroids[t] = np_centroid
+    pc_components[t] = pca_components
+
+
+# %% real data from experiment
+df_pca = df_pca_raw.copy()
+for o,organelle in enumerate(organelles):
+    df_pca[organelle] = (df_pca[organelle]-df_pca[organelle].mean())/df_pca[organelle].std()
+
+df_centroid = df_pca.groupby("condition")[organelles].mean()
+fitter_centroid = LinearRegression(fit_intercept=False)
+np_centroid = df_centroid.to_numpy()
+fitter_centroid.fit(np_centroid,np.ones(np_centroid.shape[0]))
+
+vec_centroid_start = df_centroid.loc[extremes["EYrainbow_glucose_largerBF"][0],:].to_numpy()
+vec_centroid_start[-1] = (1 - np.dot(fitter_centroid.coef_[:-1],vec_centroid_start[:-1]))/fitter_centroid.coef_[-1]
+
+vec_centroid_ended = df_centroid.loc[extremes["EYrainbow_glucose_largerBF"][-1],:].to_numpy()
+vec_centroid_ended[-1] = (1 - np.dot(fitter_centroid.coef_[:-1],vec_centroid_ended[:-1]))/fitter_centroid.coef_[-1]
+
+vec_centroid = vec_centroid_ended - vec_centroid_start
+vec_centroid = vec_centroid/np.linalg.norm(vec_centroid)
+
+np_pca = df_pca[organelles].to_numpy()
+pca = PCA(n_components=6)
+pca.fit(np_pca)
+pca_components = pca.components_
+
+# %%
+cosine_pca = np.dot(pca_components,vec_centroid)
+for c in range(len(cosine_pca)):
+    if cosine_pca[c] < 0:
+        pca_components[c] = -pca_components[c]
+cosine_pca = np.abs(cosine_pca)
+
+arg_cosine = np.argsort(cosine_pca)[::-1]
+pca_components_sorted = pca_components[arg_cosine]
+
+
+# %%
+for g in range(6): # g stands for glucose
+    
+
 
 # %%
 rng = np.random.default_rng()
 multiplier = rng.normal(loc=1.0,scale=0.1,size=100)
-# %%
-
-df_bycell = read_results(Path("./data"),subfolders,(px_x,px_y,px_z))
-# %%
-for t in range(1000):
-	continue
