@@ -24,6 +24,7 @@ from organelle_measure.data import read_results
 # %% Global Variables
 plt.rcParams["figure.autolayout"]=True
 plt.rcParams['font.size'] = '20'
+cmap = plt.get_cmap("tab10")
 list_colors = {
     "glucose":     [1,2,3,4,0,5],
     "leucine":     [1,2,3,4,0],
@@ -238,8 +239,30 @@ pca_components_sorted = pca_components[arg_cosine]
 
 
 # %%
+plt.figure()
 for g in range(6): # g stands for glucose
-    
+    proj_centroids_first  = np.dot(centroids[:,g,:],pca_components[arg_cosine[0]])
+    proj_centroids_second = np.dot(centroids[:,g,:],pca_components[arg_cosine[1]])
+    proj_centroids_third  = np.dot(centroids[:,g,:],pca_components[arg_cosine[2]])
+
+    plt.scatter(
+        proj_centroids_first, proj_centroids_second,
+        edgecolor='white',facecolor=cmap(list_colors["glucose"][g]),
+        label=f"{df_centroid.index[g]*2/100} %"
+    )
+    plt.scatter(
+        [np.dot(np_centroid[g],pca_components[arg_cosine[0]])],[np.dot(np_centroid[g],pca_components[arg_cosine[1]])],
+        marker="X",s=100,edgecolor='white',facecolor=cmap(list_colors["glucose"][g]),
+    )
+plt.legend(fontsize=14)
+plt.title("Centroid Projection onto PC")
+plt.xlabel(f"Projection {arg_cosine[0]}")
+plt.ylabel(f"Projection {arg_cosine[1]}")
+plt.savefig(
+    "plots/pca-error_glucose-1000.png",
+    dpi=600
+)
+
 
 
 # %%
