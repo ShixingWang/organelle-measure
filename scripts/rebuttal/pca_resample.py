@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.figure import figaspect
 from pathlib import Path
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
@@ -227,7 +228,7 @@ pca = PCA(n_components=6)
 pca.fit(np_pca)
 pca_components = pca.components_
 
-# %%
+# align pc with condition vectors
 cosine_pca = np.dot(pca_components,vec_centroid)
 for c in range(len(cosine_pca)):
     if cosine_pca[c] < 0:
@@ -306,30 +307,31 @@ for g0 in range(6): # g stands for glucose
     subtract_same = centroids[:,g0,:] - true_centroid
     distance_same = np.apply_along_axis(np.linalg.norm,axis=1,arr=subtract_same)
 
-    plt.figure()
+    w,h = figaspect(0.7)
+    plt.figure(figsize=(w,h))
     plt.hist(
-        distance_same,
+        distance_same, density=True,
         color=cmap(list_colors["glucose"][g0]),histtype='step',
-        label=f"{df_centroid.index[g0]*2/100} %"
+        label=f"{df_centroid.index[g0]*2/100}%"
     )
     for g1 in range(6):
         if g1==g0:
             continue
-        distance_centroid = np.linalg.norm((np_centroid[g1] - true_centroid))
+        # distance_centroid = np.linalg.norm((np_centroid[g1] - true_centroid))
         subtract_across = centroids[:,g1,:] - true_centroid
         distance_across = np.apply_along_axis(np.linalg.norm,axis=1,arr=subtract_across)
         plt.hist(
             distance_across,density=True,
             color=cmap(list_colors["glucose"][g1]),histtype='step',
-            label=f"{df_centroid.index[g1]*2/100} %"
+            label=f"{df_centroid.index[g1]*2/100}%"
         )
-        plt.hist(
-            [distance_centroid],
-            bins=[distance_centroid-0.001,distance_centroid+0.001],
-            density=True,
-            color=cmap(list_colors["glucose"][g1]),histtype='stepfilled',
-        )
-    plt.legend()
+        # plt.hist(
+        #     [distance_centroid],
+        #     bins=[distance_centroid-0.001,distance_centroid+0.001],
+        #     density=True,
+        #     color=cmap(list_colors["glucose"][g1]),histtype='stepfilled',
+        # )
+    plt.legend(loc=(1.05,0.4))
     plt.title(f"Distance from Centroid of {df_centroid.index[g0]*2/100}% Glucose")
     plt.xlabel(f"2-Norm Distance")
 
@@ -338,7 +340,5 @@ for g0 in range(6): # g stands for glucose
         f"plots/pca_error_analysis/distance-distrib_glucose-{str(df_centroid.index[g0]).replace('.','-')}.png",
         dpi=600
     )
-
-
 
 # %%

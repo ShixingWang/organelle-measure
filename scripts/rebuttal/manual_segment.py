@@ -19,7 +19,7 @@ organelles = [
 folder_img = Path("images/rebuttal_manual")
 folder_data = Path("data/EYrainbow_glucose_largerBF/")
 
-# %%
+# %% white pixels in ImageJ uint16 images are not 'white'
 
 whites = {
     "peroxisome":   1608,
@@ -203,24 +203,42 @@ pivot_orga_bycell.loc[pivot_manual_bycell_totl.index,'total'] = pivot_manual_byc
 df_orga_bycell = pivot_orga_bycell.reset_index()
 
 # %%
+correlations = []
 for organelle in organelles:
-    plt.figure()
-    plt.title(organelle)
-    plt.scatter(
-        df_orga_bycell.loc[
+    x = df_orga_bycell.loc[
             df_orga_bycell["organelle"].eq(organelle)
           & df_orga_bycell["method"].eq('ilastik'),
-            "total"
-        ],
-        df_orga_bycell.loc[
+            ["idx-cell","total"]
+        ]
+    y = df_orga_bycell.loc[
             df_orga_bycell["organelle"].eq(organelle)
           & df_orga_bycell["method"].eq('manual'),
-            "total"
+            ['idx-cell',"total"]
         ]
-    )
-    plt.plot(
-        [np.min(df_orga_bycell.loc[df_orga_bycell["organelle"].eq(organelle)& df_orga_bycell["method"].eq('ilastik'),"total"]),np.max(df_orga_bycell.loc[df_orga_bycell["organelle"].eq(organelle)& df_orga_bycell["method"].eq('ilastik'),"total"])],
-        [np.min(df_orga_bycell.loc[df_orga_bycell["organelle"].eq(organelle)& df_orga_bycell["method"].eq('ilastik'),"total"]),np.max(df_orga_bycell.loc[df_orga_bycell["organelle"].eq(organelle)& df_orga_bycell["method"].eq('ilastik'),"total"])]
-    )
-    plt.show()
+    x.set_index('idx-cell',inplace=True)
+    y.set_index('idx-cell',inplace=True)
+    xy = x.join(y,how='outer',lsuffix="_x",rsuffix="_y")
+    # xy_zero = xy.copy()
+    # xy_zero.loc[xy_zero["total_x"].isna(),"total_x"] = 0
+    # xy_zero.loc[xy_zero["total_y"].isna(),"total_y"] = 0
+    xy_drop = xy.dropna()
+    corr = np.corrcoef(xy_drop,rowvar=False)
+    correlations.append(corr[1,0])
+    
+    plt.figure()
+    plt.title(f"{organelle} Segmented Total Volume per Cell",fontsize=18)
+    plt.xlabel("Ilastik/$\\mu m^3$",fontsize=18)
+    plt.ylabel("Manual/$\\mu m^3$",fontsize=18)
+    plt.scatter(x,y)
+    # plt.plot(
+    #     [x.min(),x.max()],
+    #     [x.min(),x.max()]
+    # )
+    plt.savefig(f"plots/manual_segment/scatter_{organelle}.png")
+plt.figure()
+plt.bar(np.arange(6),correlations)
+plt.xticks(np.arange(6),organelles)
+plt.xlabel("Organelle",fontsize=18)
+plt.ylabel("Correlation Coefficient",fontsize=18)
+plt.savefig(f"plots/manual_segment/correlation_coefficient.png")
 # %%
