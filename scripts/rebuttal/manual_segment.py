@@ -158,25 +158,32 @@ df_orga = pd.concat(dfs_orga,ignore_index=True)
 df_manual = pd.concat((pd.read_csv(str(fmanual)) for fmanual in folder_img.glob("*.csv")))
 
 
-# %% Data procssing
-df_cell.loc[:,"effective-volume"] = (px_x*px_y)*np.sqrt(px_x*px_y)*(2.)*df_cell.loc[:,"area"]*np.sqrt(df_cell.loc[:,"area"])/np.sqrt(np.pi) 
+# %% Data procssing; cancelled um volume calculation on 2024-08-23
+
+# df_cell.loc[:,"effective-volume"] = (px_x*px_y)*np.sqrt(px_x*px_y)*(2.)*df_cell.loc[:,"area"]*np.sqrt(df_cell.loc[:,"area"])/np.sqrt(np.pi) 
 pivot_cell_bycell = df_cell.set_index(["idx-cell"])
 
-df_orga["volume-micron"] = np.empty_like(df_orga.index)
-df_orga.loc[df_orga["organelle"].eq("vacuole"),"volume-micron"] = (px_x*px_y)*np.sqrt(px_x*px_y)*(2.)*df_orga.loc[df_orga["organelle"].eq("vacuole"),"volume-pixel"]*np.sqrt(df_orga.loc[df_orga["organelle"].eq("vacuole"),"volume-pixel"])/np.sqrt(np.pi) 
-df_orga.loc[df_orga["organelle"].ne("vacuole"),"volume-micron"] = px_x*px_y*px_z*df_orga.loc[df_orga["organelle"].ne("vacuole"),"volume-pixel"]
+# df_orga["volume-micron"] = np.empty_like(df_orga.index)
+# df_orga.loc[df_orga["organelle"].eq("vacuole"),"volume-micron"] = (px_x*px_y)*np.sqrt(px_x*px_y)*(2.)*df_orga.loc[df_orga["organelle"].eq("vacuole"),"volume-pixel"]*np.sqrt(df_orga.loc[df_orga["organelle"].eq("vacuole"),"volume-pixel"])/np.sqrt(np.pi) 
+# df_orga.loc[df_orga["organelle"].ne("vacuole"),"volume-micron"] = px_x*px_y*px_z*df_orga.loc[df_orga["organelle"].ne("vacuole"),"volume-pixel"]
+# pivot_orga_bycell_mean = df_orga.loc[:,["organelle","idx-cell",'method',"volume-micron"]].groupby(["organelle","idx-cell",'method']).mean( )["volume-micron"]
+# pivot_orga_bycell_nums = df_orga.loc[:,["organelle","idx-cell",'method',"volume-micron"]].groupby(["organelle","idx-cell",'method']).count()["volume-micron"]
+# pivot_orga_bycell_totl = df_orga.loc[:,["organelle","idx-cell",'method',"volume-micron"]].groupby(["organelle","idx-cell",'method']).sum(  )["volume-micron"]
 df_orga["method"] = 'ilastik'
-pivot_orga_bycell_mean = df_orga.loc[:,["organelle","idx-cell",'method',"volume-micron"]].groupby(["organelle","idx-cell",'method']).mean()["volume-micron"]
-pivot_orga_bycell_nums = df_orga.loc[:,["organelle","idx-cell",'method',"volume-micron"]].groupby(["organelle","idx-cell",'method']).count()["volume-micron"]
-pivot_orga_bycell_totl = df_orga.loc[:,["organelle","idx-cell",'method',"volume-micron"]].groupby(["organelle","idx-cell",'method']).sum()["volume-micron"]
+pivot_orga_bycell_mean = df_orga.loc[:,["organelle","idx-cell",'method',"volume-pixel"]].groupby(["organelle","idx-cell",'method']).mean( )["volume-pixel"]
+pivot_orga_bycell_nums = df_orga.loc[:,["organelle","idx-cell",'method',"volume-pixel"]].groupby(["organelle","idx-cell",'method']).count()["volume-pixel"]
+pivot_orga_bycell_totl = df_orga.loc[:,["organelle","idx-cell",'method',"volume-pixel"]].groupby(["organelle","idx-cell",'method']).sum(  )["volume-pixel"]
 
-df_manual["volume-micron"] = np.empty_like(df_manual.index)
-df_manual.loc[df_manual["organelle"].eq("vacuole"),"volume-micron"] = (px_x*px_y)*np.sqrt(px_x*px_y)*(2.)*df_manual.loc[df_manual["organelle"].eq("vacuole"),"volume-pixel"]*np.sqrt(df_manual.loc[df_manual["organelle"].eq("vacuole"),"volume-pixel"])/np.sqrt(np.pi) 
-df_manual.loc[df_manual["organelle"].ne("vacuole"),"volume-micron"] = px_x*px_y*px_z*df_manual.loc[df_manual["organelle"].ne("vacuole"),"volume-pixel"]
+# df_manual["volume-micron"] = np.empty_like(df_manual.index)
+# df_manual.loc[df_manual["organelle"].eq("vacuole"),"volume-micron"] = (px_x*px_y)*np.sqrt(px_x*px_y)*(2.)*df_manual.loc[df_manual["organelle"].eq("vacuole"),"volume-pixel"]*np.sqrt(df_manual.loc[df_manual["organelle"].eq("vacuole"),"volume-pixel"])/np.sqrt(np.pi) 
+# df_manual.loc[df_manual["organelle"].ne("vacuole"),"volume-micron"] = px_x*px_y*px_z*df_manual.loc[df_manual["organelle"].ne("vacuole"),"volume-pixel"]
+# pivot_manual_bycell_mean = df_manual.loc[:,["organelle","idx-cell",'method',"volume-micron"]].groupby(["organelle","idx-cell",'method']).mean( )["volume-micron"]
+# pivot_manual_bycell_nums = df_manual.loc[:,["organelle","idx-cell",'method',"volume-micron"]].groupby(["organelle","idx-cell",'method']).count()["volume-micron"]
+# pivot_manual_bycell_totl = df_manual.loc[:,["organelle","idx-cell",'method',"volume-micron"]].groupby(["organelle","idx-cell",'method']).sum(  )["volume-micron"]
 df_manual['method'] = 'manual'
-pivot_manual_bycell_mean = df_manual.loc[:,["organelle","idx-cell",'method',"volume-micron"]].groupby(["organelle","idx-cell",'method']).mean()["volume-micron"]
-pivot_manual_bycell_nums = df_manual.loc[:,["organelle","idx-cell",'method',"volume-micron"]].groupby(["organelle","idx-cell",'method']).count()["volume-micron"]
-pivot_manual_bycell_totl = df_manual.loc[:,["organelle","idx-cell",'method',"volume-micron"]].groupby(["organelle","idx-cell",'method']).sum()["volume-micron"]
+pivot_manual_bycell_mean = df_manual.loc[:,["organelle","idx-cell",'method',"volume-pixel"]].groupby(["organelle","idx-cell",'method']).mean( )["volume-pixel"]
+pivot_manual_bycell_nums = df_manual.loc[:,["organelle","idx-cell",'method',"volume-pixel"]].groupby(["organelle","idx-cell",'method']).count()["volume-pixel"]
+pivot_manual_bycell_totl = df_manual.loc[:,["organelle","idx-cell",'method',"volume-pixel"]].groupby(["organelle","idx-cell",'method']).sum(  )["volume-pixel"]
 
 # %%
 index_bycell = pd.MultiIndex.from_tuples(
@@ -203,6 +210,14 @@ pivot_orga_bycell.loc[pivot_manual_bycell_totl.index,'total'] = pivot_manual_byc
 df_orga_bycell = pivot_orga_bycell.reset_index()
 
 # %%
+names = {
+    "peroxisome":   "Peroxisome",
+    "vacuole":      "Vacuole",
+    "ER":           "ER",
+    "golgi":        "Golgi",
+    "mitochondria": "Mitochondrion",
+    "LD":           "Lipid Droplet",
+}
 correlations = []
 for organelle in organelles:
     x = df_orga_bycell.loc[
@@ -210,11 +225,13 @@ for organelle in organelles:
           & df_orga_bycell["method"].eq('ilastik'),
             ["idx-cell","total"]
         ]
+    x = x / x.max()
     y = df_orga_bycell.loc[
             df_orga_bycell["organelle"].eq(organelle)
           & df_orga_bycell["method"].eq('manual'),
             ['idx-cell',"total"]
         ]
+    y = y / y.max()
     x.set_index('idx-cell',inplace=True)
     y.set_index('idx-cell',inplace=True)
     xy = x.join(y,how='outer',lsuffix="_x",rsuffix="_y")
@@ -226,19 +243,19 @@ for organelle in organelles:
     correlations.append(corr[1,0])
     
     plt.figure()
-    plt.title(f"{organelle} Segmented Total Volume per Cell",fontsize=18)
-    plt.xlabel("Ilastik/$\\mu m^3$",fontsize=18)
-    plt.ylabel("Manual/$\\mu m^3$",fontsize=18)
+    plt.title(f"{names[organelle]} Normalized Segmented Total Volume per Cell",fontsize=18)
+    plt.xlabel("Ilastik",fontsize=18)
+    plt.ylabel("Manual Segmentation",fontsize=18)
     plt.scatter(x,y)
     # plt.plot(
     #     [x.min(),x.max()],
     #     [x.min(),x.max()]
     # )
-    plt.savefig(f"plots/manual_segment/scatter_{organelle}.png")
+    plt.savefig(f"plots/manual_segment/normalzied-max_scatter_{organelle}.png")
 plt.figure()
 plt.bar(np.arange(6),correlations)
 plt.xticks(np.arange(6),organelles)
 plt.xlabel("Organelle",fontsize=18)
 plt.ylabel("Correlation Coefficient",fontsize=18)
-plt.savefig(f"plots/manual_segment/correlation_coefficient.png")
+plt.savefig(f"plots/manual_segment/normalzied-max_correlation_coefficient.png")
 # %%
