@@ -276,6 +276,42 @@ fig3d.savefig(
 plt.close(fig3d)
 
 # %%
+fig3d = plt.figure(layout='compressed')
+ax = fig3d.add_subplot(projection='3d')
+for g in [0,-2]: # g stands for glucose
+    proj_centroids_first  = np.dot(centroids[:,g,:],pca_components[arg_cosine[0]])
+    proj_centroids_second = np.dot(centroids[:,g,:],pca_components[arg_cosine[1]])
+    proj_centroids_third  = np.dot(centroids[:,g,:],pca_components[arg_cosine[2]])
+
+    ax.scatter(
+        proj_centroids_first, proj_centroids_second, proj_centroids_third,
+        s=10,linewidths=0.5,edgecolor='white',facecolor=cmap(list_colors["glucose"][g]),
+        label=f"{df_centroid.index[g]*2/100} %"
+    )
+    ax.scatter(
+        [np.dot(np_centroid[g],pca_components[arg_cosine[0]])],
+        [np.dot(np_centroid[g],pca_components[arg_cosine[1]])],
+        [np.dot(np_centroid[g],pca_components[arg_cosine[2]])],
+        marker="X",s=100,edgecolor='white',facecolor=cmap(list_colors["glucose"][g]),
+    )
+ax.legend(loc=(1.15,0.5),fontsize=14)
+ax.set_title("Centroid Projection onto PC")
+ax.set_xlabel(f"Projection {arg_cosine[0]}",labelpad=5)
+ax.set_ylabel(f"Projection {arg_cosine[1]}",labelpad=10)
+ax.set_zlabel(f"Projection {arg_cosine[2]}",labelpad=10)
+ax.xaxis.pane.set_edgecolor('black')
+ax.yaxis.pane.set_edgecolor('black')
+ax.zaxis.pane.set_edgecolor('black')
+ax.xaxis.pane.fill = False
+ax.yaxis.pane.fill = False
+ax.zaxis.pane.fill = False
+fig3d.savefig(
+    "plots/pca_error_analysis/extremes_pca-error_glucose-1000_3d.png",
+    dpi=600
+)
+plt.close(fig3d)
+
+# %%
 for st,nd in ((0,1),(0,2),(1,2)):
     plt.figure()
     for g in range(6):
@@ -338,6 +374,46 @@ for g0 in range(6): # g stands for glucose
     # plt.show()
     plt.savefig(
         f"plots/pca_error_analysis/distance-distrib_glucose-{str(df_centroid.index[g0]).replace('.','-')}.png",
+        dpi=600
+    )
+
+# %% compare distribution of synthetic data with true centroids
+for g0 in [0,-2]: # g stands for glucose
+    true_centroid = np_centroid[g0]
+    subtract_same = centroids[:,g0,:] - true_centroid
+    distance_same = np.apply_along_axis(np.linalg.norm,axis=1,arr=subtract_same)
+
+    w,h = figaspect(0.7)
+    plt.figure(figsize=(w,h))
+    plt.hist(
+        distance_same, density=True,
+        color=cmap(list_colors["glucose"][g0]),histtype='step',
+        label=f"{df_centroid.index[g0]*2/100}%"
+    )
+    for g1 in [0,-2]:
+        if g1==g0:
+            continue
+        # distance_centroid = np.linalg.norm((np_centroid[g1] - true_centroid))
+        subtract_across = centroids[:,g1,:] - true_centroid
+        distance_across = np.apply_along_axis(np.linalg.norm,axis=1,arr=subtract_across)
+        plt.hist(
+            distance_across,density=True,
+            color=cmap(list_colors["glucose"][g1]),histtype='step',
+            label=f"{df_centroid.index[g1]*2/100}%"
+        )
+        # plt.hist(
+        #     [distance_centroid],
+        #     bins=[distance_centroid-0.001,distance_centroid+0.001],
+        #     density=True,
+        #     color=cmap(list_colors["glucose"][g1]),histtype='stepfilled',
+        # )
+    plt.legend(loc=(1.05,0.4))
+    plt.title(f"Distance from Centroid of {df_centroid.index[g0]*2/100}% Glucose")
+    plt.xlabel(f"2-Norm Distance")
+
+    # plt.show()
+    plt.savefig(
+        f"plots/pca_error_analysis/extremes_distance-distrib_glucose-{str(df_centroid.index[g0]).replace('.','-')}.png",
         dpi=600
     )
 
