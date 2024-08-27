@@ -20,7 +20,17 @@ organelles = [
 folder_img = Path("images/rebuttal_manual")
 folder_data = Path("data/EYrainbow_glucose_largerBF/")
 
-# # %% white pixels in ImageJ uint16 images are not 'white'
+# %% find exactly where the sample image is cropped from
+# img_full = io.imread("images/cell/EYrainbow_glucose_largerBF/binCell_EYrainbow_glu-100_field-0.tif")
+# img_crop = io.imread(f"{folder_img}/binCell_EYrainbow_glu-100_field-0_crop.tif")
+
+# for r in range(512-177):
+#     for c in range(512-138):
+#         if np.all(img_full[r:r+177,c:c+138]==img_crop):
+#             print(r,c)
+# # >>> 270 342
+
+# %% white pixels in ImageJ uint16 images are not 'white'
 
 # whites = {
 #     "peroxisome":   1608,
@@ -42,7 +52,9 @@ folder_data = Path("data/EYrainbow_glucose_largerBF/")
 #         util.img_as_ubyte(corrected)
 #     )
 
-# # %% measure organelles
+# %% [markdown] labeling of the images are done with the postprocessing script.
+
+# %% measure organelles
 # def parse_meta_organelle(name):
 #     """name is the stem of the ORGANELLE label image file."""
 
@@ -118,6 +130,7 @@ folder_data = Path("data/EYrainbow_glucose_largerBF/")
 #     print(f">>> finished {path_out.stem}.")
 #     return None
 
+# # %% 
 # list_in   = []
 # list_cell = []
 # list_out  = []
@@ -133,6 +146,37 @@ folder_data = Path("data/EYrainbow_glucose_largerBF/")
 
 # # %%
 # batch_apply(measure1organelle,args)
+
+
+# # %% try directly measure bw images instread of label images, 
+# # because we only need total volume
+# def parse_meta_organelle(name):
+#     """name is the stem of the ORGANELLE label image file."""
+
+#     return {
+#         "experiment": "glucose",
+#         "condition":  "100",
+#         "hour":       3,
+#         "field":      0,
+#         "organelle":  name.partition("_")[2].partition("_")[2].partition("_")[0]
+#     }
+
+# list_in   = []
+# list_cell = []
+# list_out  = []
+# for organelle in organelles:
+#     list_in.append(f"{folder_img}/equal_painted_{organelle}_EYrainbow_glu-100_field-0_crop.tif")
+#     list_cell.append(f"{folder_img}/binCell_EYrainbow_glu-100_field-0_crop.tif")
+#     list_out.append(f"{folder_img}/bw_{organelle}_EYrainbow_glu-100_field-0_crop.csv")
+# args = pd.DataFrame({
+#     "path_in":   list_in,
+#     "path_cell": list_cell,
+#     "path_out":  list_out,
+# })
+# # %%
+# batch_apply(measure1organelle,args)
+
+
 
 # %% access data of cells and organelles 
 img_cell = io.imread(str(folder_img/"binCell_EYrainbow_glu-100_field-0_crop.tif"))
@@ -286,30 +330,42 @@ for organelle in organelles:
     #     [x.min(),x.max()],
     #     [x.min(),x.max()]
     # )
-    plt.savefig(f"plots/manual_segment/normalzied-max_scatter_{organelle}.png")
 
-    plt.figure()
+    # plt.show()
+    plt.savefig(f"plots/manual_segment/px_normalzied-max_scatter_{organelle}.png")
 
 plt.figure()
 plt.bar(np.arange(6),correlations)
 plt.xticks(np.arange(6),organelles)
 plt.xlabel("Organelle",fontsize=18)
 plt.ylabel("Correlation Coefficient",fontsize=18)
-plt.savefig(f"plots/manual_segment/normalzied-max_correlation_coefficient.png")
+# plt.show()
+plt.savefig(f"plots/manual_segment/px_normalzied-max_correlation_coefficient.png")
 
+# %%
 fig, ax = plt.subplots()
+plt.ylim((-1,1))
 for o,organelle in enumerate(organelles):
     ax.scatter(
-        o - 0.5 + np.random.random(size=len(differences[organelle])),
+        o + 0.75 + 0.5*np.random.random(size=len(differences[organelle])),
         differences[organelle],
         s=2,c=cmap(o)
     )
 bplot = ax.boxplot(
     [differences[o] for o in organelles],
-    patch_artists = True,
-    tick_labels = organelles
+    sym='',
+    patch_artist = True,
+    labels = organelles,
+    medianprops=dict(color='black')
 )
 for p,patch in enumerate(bplot['boxes']):
     patch.set_facecolor(cmap(p))
-plt.show()
+# plt.show()
+plt.savefig("plots/manual_segment/px_normalzied-max_error-percentage.png")
+# %%
+pd.DataFrame({
+	"organelle": organelles,
+	"mean":   [differences[o].mean() for o in organelles],
+	"median": [differences[o].median() for o in organelles],
+}).to_csv("plots/manual_segment/error-percentage.csv")
 # %%
