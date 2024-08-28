@@ -909,9 +909,9 @@ def make_pca_plots(experiment,property,groups=None,has_volume=False,is_normalize
     return df_pca
 
 for experiment in exp_names:
-    make_pca_plots(experiment,"total-fraction",groups=extremes[experiments[experiment]],has_volume=False,is_normalized=True,non_organelle=False,saveto="plots/PCA_review_20240403")
+    make_pca_plots(experiment,"total-fraction",groups=extremes[experiments[experiment]],has_volume=False,is_normalized=True,non_organelle=False,saveto="plots/PCA_review_20240828")
 
-saveto="plots/PCA_review_20240403"
+saveto="plots/PCA_review_20240828"
 
 dict_pc        = {}
 dict_cosine    = {}
@@ -957,15 +957,14 @@ for i0,expm0 in enumerate(exp_names):
         sq_products = np.zeros((6,6)) # hard-coded num of organelles
         for s0 in range(6):
             for s1 in range(s0,6):
-                sq_products[s0,s1] = np.dot(dict_pc[expm0][s0],dict_pc[expm1][s1])/6
-        # sq_summary[i0,i0+i1] = np.sum(sq_products)
-        sq_summary[i0,i0+i1] = np.dot(dict_cosine[expm0],dict_cosine[expm1])
+                sq_products[s0,s1] = dict_cosine[expm0][s0]*np.dot(dict_pc[expm0][s0],dict_pc[expm1][s1])*dict_cosine[expm1][s1]
+        sq_summary[i0,i0+i1] = np.sum(sq_products)
 fig_summary = px.imshow(
     sq_summary.T,
     x=exp_names,y=exp_names,
     color_continuous_scale="RdBu_r",color_continuous_midpoint=0
 )
-fig_summary.write_html(f'{saveto}/pca_compare/summary_cosine.html')
+fig_summary.write_html(f'{saveto}/pca_compare/summary_7b18c1c.html')
 
 
 # superplot (a box and whisker with the individual datapoints overlaid on top)
