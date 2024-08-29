@@ -4,6 +4,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib import container
+from matplotlib.figure import figaspect
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -15,6 +16,7 @@ from organelle_measure.data import read_results
 
 
 # Global Variables
+cmap = plt.get_cmap("tab10")
 plt.rcParams["figure.autolayout"]=True
 plt.rcParams['font.size'] = '20'
 list_colors = {
@@ -126,7 +128,7 @@ df_entropies = []
 for exp in exp_names:
     folder = experiments[exp]
     num_bin = 4
-    organelles_kl = [f"total-fraction-{orga}" for orga in organelles]
+    organelles_kl = [f"{orga} volume fraction" for orga in organelles]
     df_kldiverge = df_corrcoef.loc[df_corrcoef["folder"].eq(folder),["condition",*organelles_kl]]
     # get grids in 6 dimensional space
     grids = np.array(list(map(
@@ -220,122 +222,185 @@ for exp in exp_names:
     df_entropies[-1]["entropy_diff_dummy"] = df_entropies[-1]["entropy_dummy"] - df_entropies[-1].loc[df_entropies[-1]["condition"].eq(normal),"entropy_dummy"].values[0]
 df_entropies = pd.concat(df_entropies,ignore_index=True)
 # need to incorporate df_rate
+df_entropies.set_index(["folder","condition"],inplace=True)
+df_entropies['growth_rate'] = df_rates["growth_rate"]
+df_entropies.reset_index(inplace=True)
 
 
 # KL divergence and info entropy
 
-for folder in df_entropies["folder"].unique():
-    plt.figure(figsize=(20,12))
-    g = sns.scatterplot(
-        data=df_entropies[df_entropies["folder"].eq(folder)],
-        x="index",y="KL_divergence",ci=None
-    )
-    g.set_xticks(df_entropies.loc[df_entropies["folder"].eq(folder),"index"])
-    g.set_xticklabels(df_entropies.loc[df_entropies["folder"].eq(folder),"condition"])
-    plt.savefig(f'data/mutual_information/KL-divergence_{folder}.png')
-    plt.close()
+# # replaced by block below
+# for folder in df_entropies["folder"].unique():
+#     plt.figure(figsize=(20,12))
+#     g = sns.scatterplot(
+#         data=df_entropies[df_entropies["folder"].eq(folder)],
+#         x="index",y="KL_divergence",ci=None
+#     )
+#     g.set_xticks(df_entropies.loc[df_entropies["folder"].eq(folder),"index"])
+#     g.set_xticklabels(df_entropies.loc[df_entropies["folder"].eq(folder),"condition"])
+#     plt.savefig(f'plots/mutual_information_again/KL-divergence_{folder}.png')
+#     plt.close()
 
 for folder in df_entropies["folder"].unique():
-    plt.figure(figsize=(20,12))
+    plt.figure()
     plt.scatter(
         x=df_entropies.loc[df_entropies["folder"].eq(folder),"index"],
         y=df_entropies.loc[df_entropies["folder"].eq(folder),"KL_divergence"],
-        marker='x'
+        marker='x',label="Experiment"
     )
     plt.scatter(
         x=df_entropies.loc[df_entropies["folder"].eq(folder),"index"],
         y=df_entropies.loc[df_entropies["folder"].eq(folder),"KL_divergence_dummy"],
-        marker='o'
+        marker='o',label="Random Shuffle"
     )
     plt.xticks(
         df_entropies.loc[df_entropies["folder"].eq(folder),"index"],
         df_entropies.loc[df_entropies["folder"].eq(folder),"condition"]
     )
+    plt.legend()
     plt.xlabel("condition")
-    plt.ylabel("KL-divergence")
-    plt.savefig(f'data/mutual_information/KL-divergence_{folder}.png')
+    plt.title("KL-divergence")
+    plt.savefig(f'plots/mutual_information_again/KL-divergence_{folder}.png',dpi=600)
     plt.close()
 
-plt.figure(figsize=(20,12))
-g = sns.scatterplot(
-    data=df_entropies,
-    x="growth_rate",y="entropy",hue="folder",marker="x"
-)
-sns.scatterplot(
-    data=df_entropies,
-    x="growth_rate",y="entropy_dummy",hue="folder",
-    marker="o",ax=g
-)
+
+w,h = figaspect(0.5)
+plt.figure(figsize=(w,h))
+for e,exp in enumerate(experiments.keys()):
+    plt.scatter(
+        x=df_entropies.loc[df_entropies['folder'].eq(experiments[exp]),"growth_rate"],
+        y=df_entropies.loc[df_entropies['folder'].eq(experiments[exp]),"entropy"],
+        marker="x",color=cmap(e) 
+    )
+    plt.scatter(
+        x=df_entropies.loc[df_entropies['folder'].eq(experiments[exp]),"growth_rate"],
+        y=df_entropies.loc[df_entropies['folder'].eq(experiments[exp]),"entropy_dummy"],
+        marker="o",color=cmap(e),label=exp
+    )
+plt.scatter([],[],marker='x',color='k',label="Experiment")
+plt.scatter([],[],marker='o',color='k',label="Random Shuffle")
 plt.ylim(0,None)
+plt.xlabel("Growth Rate")
+plt.ylabel("Entropy")
 plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0)
-plt.savefig(f'data/mutual_information/entropy_growthrate.png')
+plt.savefig(f'plots/mutual_information_again/entropy_growthrate.png',dpi=600)
 plt.close()
 
-plt.figure(figsize=(20,12))
-g = sns.scatterplot(
-    data=df_entropies,
-    x="growth_rate",y="KL_divergence",hue="folder",marker="x"
-)
-sns.scatterplot(
-    data=df_entropies,
-    x="growth_rate",y="KL_divergence_dummy",hue="folder",
-    marker="o",ax=g
-)
+
+w,h = figaspect(0.5)
+plt.figure(figsize=(w,h))
+for e,exp in enumerate(experiments.keys()):
+    plt.scatter(
+        x=df_entropies.loc[df_entropies["folder"].eq(experiments[exp]),"growth_rate","growth_rate"],
+        x=df_entropies.loc[df_entropies["folder"].eq(experiments[exp]),"growth_rate","KL_divergence"],
+        marker="x",color=cmap(e)
+    )
+    plt.scatter(
+        x=df_entropies.loc[df_entropies["folder"].eq(experiments[exp]),"growth_rate","growth_rate"],
+        x=df_entropies.loc[df_entropies["folder"].eq(experiments[exp]),"growth_rate","KL_divergence_dummy"],
+        marker="o",ax=g
+    )
+plt.scatter([],[],marker='x',color='k',label="Experiment")
+plt.scatter([],[],marker='o',color='k',label="Random Shuffle")
 plt.ylim(0,None)
 plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0)
-plt.savefig(f'data/mutual_information/klDivergence_growthrate.png')
+plt.savefig(f'plots/mutual_information_again/klDivergence_growthrate.png')
 plt.close()
 
-plt.figure(figsize=(11,6))
-g = sns.scatterplot(
-    data=df_entropies,
-    x="KL_divergence",y="entropy",hue="experiment",marker="x",s=60
-)
-sns.scatterplot(
-    data=df_entropies,
-    x="KL_divergence_dummy",y="entropy_dummy",hue="experiment",
-    marker="o",ax=g,s=60
-)
+
+w,h = figaspect(0.5)
+plt.figure(figsize=(w,h))
+for e,exp in enumerate(experiments.keys()):
+    plt.scatter(
+        x=df_entropies.loc[df_entropies["folder"].eq(experiments[exp]),"KL_divergence"],
+        y=df_entropies.loc[df_entropies["folder"].eq(experiments[exp]),"entropy"],
+        marker="x",color=cmap(e)
+    )
+    plt.scatter(
+        x=df_entropies.loc[df_entropies["folder"].eq(experiments[exp]),"KL_divergence_dummy"],
+        y=df_entropies.loc[df_entropies["folder"].eq(experiments[exp]),"entropy_dummy"],
+        marker="o",color=cmap(e),edgecolor='white',
+        label=exp
+    )
+plt.scatter([],[],marker='x',color='k',label="Experiment")
+plt.scatter([],[],marker='o',color='k',label="Random Shuffle")
 plt.ylim(0,None)
+plt.xlabel("K-L Divergence")
+plt.ylabel("Entropy")
 plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0)
-plt.savefig(f'data/mutual_information/entropy_klDivergence.png')
+plt.savefig(f'plots/mutual_information_again/entropy_klDivergence.png',dpi=600)
 plt.close()
-# The question from the review 2 is because I did not make legends to explain the meanings of 'x' and 'o' markers. The x markers are the real data (2% did have KL divergence of 0), while o markers are random shuffles from the same group. They should have a KL divergence from 2% experiment data, and a higher information entropy, which are indeed what we see.
+# The question from the review 2 is because I did not make legends to
+# explain the meanings of 'x' and 'o' markers. 
+# The x markers are the real data (2% did have KL divergence of 0), 
+# while o markers are random shuffles from the same group. 
+# They should have a KL divergence from 2% experiment data, 
+# and a higher information entropy, which are indeed what we see.
 
 
-plt.figure(figsize=(20,12))
-g = sns.scatterplot(
-    data=df_entropies,
-    x="entropy",y="KL_divergence",hue="folder",marker="x"
-)
-sns.scatterplot(
-    data=df_entropies,
-    x="entropy_dummy",y="KL_divergence_dummy",hue="folder",
-    marker="o",ax=g
-)
+w,h = figaspect(0.5)
+plt.figure(figsize=(w,h))
+for e,exp in enumerate(experiments.keys()):
+    plt.scatter(
+        x=df_entropies.loc[df_entropies["folder"].eq(experiments[exp]),"entropy"],
+        y=df_entropies.loc[df_entropies["folder"].eq(experiments[exp]),"KL_divergence"],
+        marker="x",color=cmap(e)
+    )
+    plt.scatter(
+        x=df_entropies.loc[df_entropies["folder"].eq(experiments[exp]),"entropy_dummy"],
+        y=df_entropies.loc[df_entropies["folder"].eq(experiments[exp]),"KL_divergence_dummy"],
+        marker="o",color=cmap(e),edgecolor='white',
+        label=exp
+    )
+plt.scatter([],[],marker='x',color='k',label="Experiment")
+plt.scatter([],[],marker='o',color='k',label="Random Shuffle")
 plt.ylim(0,None)
+plt.xlabel("Entropy")
+plt.ylabel("K-L Divergence")
 plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0)
-plt.savefig(f'data/mutual_information/klDivergence_entropy.png')
+plt.savefig(f'plots/mutual_information_again/klDivergence_entropy.png',dpi=600)
 plt.close()
+
 
 # glucose large experiment only:
-plt.rcParams['font.size'] = '26'
-plt.figure(figsize=(15,10))
-g = sns.scatterplot(
-    data=df_entropies[df_entropies["folder"].eq("EYrainbow_glucose_largerBF")],
-    x="KL_divergence",y="entropy",hue="condition",marker="x",s=81,
-    palette=list(np.array(sns.color_palette("tab10"))[list_colors["glucose"]])
-)
-sns.scatterplot(
-    data=df_entropies[df_entropies["folder"].eq("EYrainbow_glucose_largerBF")],
-    x="KL_divergence_dummy",y="entropy_dummy",hue="condition",
-    palette=list(np.array(sns.color_palette("tab10"))[list_colors["glucose"]]),marker="o",ax=g,s=81
-)
+w,h = figaspect(0.48)
+plt.figure(figsize=(w,h))
+for c,cond in enumerate(df_entropies.loc[df_entropies["folder"].eq("EYrainbow_glucose_largerBF"),"condition"].unique()):
+    plt.scatter(
+        x=df_entropies.loc[
+            df_entropies["folder"].eq("EYrainbow_glucose_largerBF")
+          & df_entropies["condition"].eq(cond),
+            "KL_divergence"
+        ],
+        y=df_entropies.loc[
+            df_entropies["folder"].eq("EYrainbow_glucose_largerBF")
+          & df_entropies["condition"].eq(cond),
+            "entropy"
+        ],
+        marker="x", color=cmap(list_colors["glucose"][c])
+    )
+    plt.scatter(
+        x=df_entropies.loc[
+            df_entropies["folder"].eq("EYrainbow_glucose_largerBF")
+          & df_entropies["condition"].eq(cond),
+            "KL_divergence_dummy"
+        ],
+        y=df_entropies.loc[
+            df_entropies["folder"].eq("EYrainbow_glucose_largerBF")
+          & df_entropies["condition"].eq(cond),
+            "entropy_dummy"
+        ],
+        marker="o", color=cmap(list_colors["glucose"][c]),
+        label=f"{cond*2/100}% w/v glucose"
+    )
+plt.scatter([],[],marker='x',color='k',label="Experiment")
+plt.scatter([],[],marker='o',color='k',label="Random Shuffle")
 plt.ylim(0,None)
+plt.xlabel("K-L Divergence")
+plt.ylabel("Entropy")
 plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0)
-plt.savefig(f'data/mutual_information/entropy_klDivergence_glucose.png')
+plt.savefig(f'plots/mutual_information_again/entropy_klDivergence_glucose.png',dpi=600)
 plt.close()
-
 
 
 columns = ['cell length','cell area','cell volume',*properties]
@@ -369,7 +434,7 @@ for folder in subfolders:
             x=columns,y=columns,
             color_continuous_scale="OrRd",range_color=[0,1]
         )
-        fig.write_html(f'{Path("./data/mutual_information")}/{mx_name}_{folder}.html')
+        fig.write_html(f'{Path("./plots/mutual_information_again")}/{mx_name}_{folder}.html')
 
 
 # Correlation coefficient
@@ -461,10 +526,10 @@ pivot_bycondition["cell_count"] = df_bycell[['folder','organelle','condition','m
 df_bycondition = pivot_bycondition.reset_index()
 
 # Growth Rates
-# # old data taken together with imaging
-# df_rates = pd.read_csv(str(Path("./plots/growthrate")/"growth_rate.csv"))
-# df_rates.rename(columns={"experiment":"folder"},inplace=True)
-# df_rates.set_index(["folder","condition"],inplace=True)
+# old data taken together with imaging
+df_rates = pd.read_csv(str(Path("./plots/growthrate")/"growth_rate.csv"))
+df_rates.rename(columns={"experiment":"folder"},inplace=True)
+df_rates.set_index(["folder","condition"],inplace=True)
 
 # new data taken from deliberate replicates
 df_rate_replicate = pd.read_csv("plots/growthrate/rebuttal_OD_replicate.csv")
@@ -960,11 +1025,11 @@ for i0,expm0 in enumerate(exp_names):
                 sq_products[s0,s1] = dict_cosine[expm0][s0]*np.dot(dict_pc[expm0][s0],dict_pc[expm1][s1])*dict_cosine[expm1][s1]
         sq_summary[i0,i0+i1] = np.sum(sq_products)
 fig_summary = px.imshow(
-    sq_summary.T,
+    sq_summary,
     x=exp_names,y=exp_names,
     color_continuous_scale="RdBu_r",color_continuous_midpoint=0
 )
-fig_summary.write_html(f'{saveto}/pca_compare/summary_7b18c1c.html')
+fig_summary.write_html(f'{saveto}/pca_compare/summary_7b18c1c_T.html')
 
 
 # superplot (a box and whisker with the individual datapoints overlaid on top)
