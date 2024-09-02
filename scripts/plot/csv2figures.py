@@ -820,114 +820,114 @@ def make_pca_plots(experiment,property,groups=None,has_volume=False,is_normalize
     pc2proj = arg_cosine[:3]
     df_pca_extremes = df_pca.loc[df_pca["condition"].isin(groups)]
 
-    # 3d projection
-    figproj = plt.figure(figsize=(15,12))
-    ax = figproj.add_subplot(projection="3d")
-    for condi in groups[::-1]:
-        pc_x = df_pca_extremes.loc[df_pca_extremes["condition"].eq(condi),f"proj{pc2proj[0]}"],
-        pc_y = df_pca_extremes.loc[df_pca_extremes["condition"].eq(condi),f"proj{pc2proj[1]}"],
-        pc_z = df_pca_extremes.loc[df_pca_extremes["condition"].eq(condi),f"proj{pc2proj[2]}"],
-        ax.scatter(
-            pc_x, pc_y, pc_z,
-            s=55,alpha=0.3,label=f"{condi}"
-        )
-    ax.set_xlabel(f"proj {pc2proj[0]}")
-    ax.set_ylabel(f"proj {pc2proj[1]}")
-    ax.set_zlabel(f"proj {pc2proj[2]}")
-    ax.xaxis.pane.set_edgecolor('black')
-    ax.yaxis.pane.set_edgecolor('black')
-    ax.zaxis.pane.set_edgecolor('black')
-    ax.xaxis.pane.fill = False
-    ax.yaxis.pane.fill = False
-    ax.zaxis.pane.fill = False
-    ax.set_xlim(*(np.percentile(df_pca_extremes[f"proj{pc2proj[0]}"].to_numpy(),[1,99])+np.array([-0.1,0.1])))
-    ax.set_ylim(*(np.percentile(df_pca_extremes[f"proj{pc2proj[1]}"].to_numpy(),[1,99])+np.array([-0.1,0.1])))
-    ax.set_zlim(*(np.percentile(df_pca_extremes[f"proj{pc2proj[2]}"].to_numpy(),[1,99])+np.array([-0.1,0.1])))
-    ax.legend(loc=(1.04,1.0))
-    figproj.savefig(f'{saveto}/pca_projection_extremes/pca_projection3d_{folder}_{name}_pc{"".join([str(p) for p in pc2proj])}.png')
-    plt.close(figproj)
+    # # 3d projection
+    # figproj = plt.figure(figsize=(15,12))
+    # ax = figproj.add_subplot(projection="3d")
+    # for condi in groups[::-1]:
+    #     pc_x = df_pca_extremes.loc[df_pca_extremes["condition"].eq(condi),f"proj{pc2proj[0]}"],
+    #     pc_y = df_pca_extremes.loc[df_pca_extremes["condition"].eq(condi),f"proj{pc2proj[1]}"],
+    #     pc_z = df_pca_extremes.loc[df_pca_extremes["condition"].eq(condi),f"proj{pc2proj[2]}"],
+    #     ax.scatter(
+    #         pc_x, pc_y, pc_z,
+    #         s=55,alpha=0.3,label=f"{condi}"
+    #     )
+    # ax.set_xlabel(f"proj {pc2proj[0]}")
+    # ax.set_ylabel(f"proj {pc2proj[1]}")
+    # ax.set_zlabel(f"proj {pc2proj[2]}")
+    # ax.xaxis.pane.set_edgecolor('black')
+    # ax.yaxis.pane.set_edgecolor('black')
+    # ax.zaxis.pane.set_edgecolor('black')
+    # ax.xaxis.pane.fill = False
+    # ax.yaxis.pane.fill = False
+    # ax.zaxis.pane.fill = False
+    # ax.set_xlim(*(np.percentile(df_pca_extremes[f"proj{pc2proj[0]}"].to_numpy(),[1,99])+np.array([-0.1,0.1])))
+    # ax.set_ylim(*(np.percentile(df_pca_extremes[f"proj{pc2proj[1]}"].to_numpy(),[1,99])+np.array([-0.1,0.1])))
+    # ax.set_zlim(*(np.percentile(df_pca_extremes[f"proj{pc2proj[2]}"].to_numpy(),[1,99])+np.array([-0.1,0.1])))
+    # ax.legend(loc=(1.04,1.0))
+    # figproj.savefig(f'{saveto}/pca_projection_extremes/pca_projection3d_{folder}_{name}_pc{"".join([str(p) for p in pc2proj])}.png')
+    # plt.close(figproj)
 
-    # 3d projections, all conditions
-    for d,condi in enumerate(np.sort(df_pca["condition"].unique())):
-        if condi == groups[1]:
-            continue
-        figproj = plt.figure(figsize=(15,12))
-        ax = figproj.add_subplot(projection="3d")
+    # # 3d projections, all conditions
+    # for d,condi in enumerate(np.sort(df_pca["condition"].unique())):
+    #     if condi == groups[1]:
+    #         continue
+    #     figproj = plt.figure(figsize=(15,12))
+    #     ax = figproj.add_subplot(projection="3d")
         
-        pc_x = df_pca.loc[df_pca["condition"].eq(groups[-1]),f"proj{pc2proj[0]}"],
-        pc_y = df_pca.loc[df_pca["condition"].eq(groups[-1]),f"proj{pc2proj[1]}"],
-        pc_z = df_pca.loc[df_pca["condition"].eq(groups[-1]),f"proj{pc2proj[2]}"],
-        ax.scatter(
-            pc_x, pc_y, pc_z,
-            edgecolor='white',facecolor=sns.color_palette('tab10')[0],
-            s=55,alpha=0.3,label=f"{groups[-1]}"
-        )
+    #     pc_x = df_pca.loc[df_pca["condition"].eq(groups[-1]),f"proj{pc2proj[0]}"],
+    #     pc_y = df_pca.loc[df_pca["condition"].eq(groups[-1]),f"proj{pc2proj[1]}"],
+    #     pc_z = df_pca.loc[df_pca["condition"].eq(groups[-1]),f"proj{pc2proj[2]}"],
+    #     ax.scatter(
+    #         pc_x, pc_y, pc_z,
+    #         edgecolor='white',facecolor=sns.color_palette('tab10')[0],
+    #         s=55,alpha=0.3,label=f"{groups[-1]}"
+    #     )
         
-        pc_x = df_pca.loc[df_pca["condition"].eq(condi),f"proj{pc2proj[0]}"],
-        pc_y = df_pca.loc[df_pca["condition"].eq(condi),f"proj{pc2proj[1]}"],
-        pc_z = df_pca.loc[df_pca["condition"].eq(condi),f"proj{pc2proj[2]}"],
-        ax.scatter(
-            pc_x, pc_y, pc_z,
-            edgecolor='white',facecolor=sns.color_palette('tab10')[list_colors[experiment][d]],
-            s=55,alpha=0.3,label=f"{condi}"
-        )
-        ax.set_xlabel(f"proj {pc2proj[0]}")
-        ax.set_ylabel(f"proj {pc2proj[1]}")
-        ax.set_zlabel(f"proj {pc2proj[2]}")
-        ax.xaxis.pane.set_edgecolor('black')
-        ax.yaxis.pane.set_edgecolor('black')
-        ax.zaxis.pane.set_edgecolor('black')
-        ax.xaxis.pane.fill = False
-        ax.yaxis.pane.fill = False
-        ax.zaxis.pane.fill = False
-        ax.set_xlim(*(np.percentile(df_pca_extremes[f"proj{pc2proj[0]}"].to_numpy(),[1,99])+np.array([-0.1,0.1])))
-        ax.set_ylim(*(np.percentile(df_pca_extremes[f"proj{pc2proj[1]}"].to_numpy(),[1,99])+np.array([-0.1,0.1])))
-        ax.set_zlim(*(np.percentile(df_pca_extremes[f"proj{pc2proj[2]}"].to_numpy(),[1,99])+np.array([-0.1,0.1])))
-        ax.legend(loc=(1.04,0.5))
-        figproj.savefig(f'{saveto}/pca_projection_all_plt/pca_projection3d_{folder}_{name}_condi-{str(condi).replace(".","-")}_pc{"".join([str(p) for p in pc2proj])}.png')
-        plt.close(figproj)
+    #     pc_x = df_pca.loc[df_pca["condition"].eq(condi),f"proj{pc2proj[0]}"],
+    #     pc_y = df_pca.loc[df_pca["condition"].eq(condi),f"proj{pc2proj[1]}"],
+    #     pc_z = df_pca.loc[df_pca["condition"].eq(condi),f"proj{pc2proj[2]}"],
+    #     ax.scatter(
+    #         pc_x, pc_y, pc_z,
+    #         edgecolor='white',facecolor=sns.color_palette('tab10')[list_colors[experiment][d]],
+    #         s=55,alpha=0.3,label=f"{condi}"
+    #     )
+    #     ax.set_xlabel(f"proj {pc2proj[0]}")
+    #     ax.set_ylabel(f"proj {pc2proj[1]}")
+    #     ax.set_zlabel(f"proj {pc2proj[2]}")
+    #     ax.xaxis.pane.set_edgecolor('black')
+    #     ax.yaxis.pane.set_edgecolor('black')
+    #     ax.zaxis.pane.set_edgecolor('black')
+    #     ax.xaxis.pane.fill = False
+    #     ax.yaxis.pane.fill = False
+    #     ax.zaxis.pane.fill = False
+    #     ax.set_xlim(*(np.percentile(df_pca_extremes[f"proj{pc2proj[0]}"].to_numpy(),[1,99])+np.array([-0.1,0.1])))
+    #     ax.set_ylim(*(np.percentile(df_pca_extremes[f"proj{pc2proj[1]}"].to_numpy(),[1,99])+np.array([-0.1,0.1])))
+    #     ax.set_zlim(*(np.percentile(df_pca_extremes[f"proj{pc2proj[2]}"].to_numpy(),[1,99])+np.array([-0.1,0.1])))
+    #     ax.legend(loc=(1.04,0.5))
+    #     figproj.savefig(f'{saveto}/pca_projection_all_plt/pca_projection3d_{folder}_{name}_condi-{str(condi).replace(".","-")}_pc{"".join([str(p) for p in pc2proj])}.png')
+    #     plt.close(figproj)
  
-    # 2d projections
-    sns.set_style("whitegrid")
-    for first,second in ((0,1),(0,2),(1,2)):
-        plt.figure(figsize=(15,12))
-        sns_plot = sns.scatterplot(
-            data=df_pca_extremes[df_pca_extremes["condition"].eq(groups[0])],
-            x=f"proj{pc2proj[first]}",y=f"proj{pc2proj[second]}",
-            color=sns.color_palette("tab10")[1],s=100,alpha=0.75
-        )
-        sns_plot = sns.scatterplot(
-            data=df_pca_extremes[df_pca_extremes["condition"].eq(groups[1])],
-            x=f"proj{pc2proj[first]}",y=f"proj{pc2proj[second]}",
-            color=sns.color_palette("tab10")[0],s=100,alpha=0.75
-        )
-        sns_plot.figure.savefig(f'{saveto}/pca_projection_extremes/pca_projection2d_{folder}_{name}_pc{pc2proj[first]}{pc2proj[second]}.png')
-        plt.close()
+    # # 2d projections
+    # sns.set_style("whitegrid")
+    # for first,second in ((0,1),(0,2),(1,2)):
+    #     plt.figure(figsize=(15,12))
+    #     sns_plot = sns.scatterplot(
+    #         data=df_pca_extremes[df_pca_extremes["condition"].eq(groups[0])],
+    #         x=f"proj{pc2proj[first]}",y=f"proj{pc2proj[second]}",
+    #         color=sns.color_palette("tab10")[1],s=100,alpha=0.75
+    #     )
+    #     sns_plot = sns.scatterplot(
+    #         data=df_pca_extremes[df_pca_extremes["condition"].eq(groups[1])],
+    #         x=f"proj{pc2proj[first]}",y=f"proj{pc2proj[second]}",
+    #         color=sns.color_palette("tab10")[0],s=100,alpha=0.75
+    #     )
+    #     sns_plot.figure.savefig(f'{saveto}/pca_projection_extremes/pca_projection2d_{folder}_{name}_pc{pc2proj[first]}{pc2proj[second]}.png')
+    #     plt.close()
 
-    # 2d projections, all conditions
-    for d,condi in enumerate(np.sort(df_pca["condition"].unique())):
-        if condi == groups[1]:
-            continue
-        for first,second in ((0,1),(0,2),(1,2)):
-            plt.figure(figsize=(15,12))
-            sns_plot = sns.scatterplot(
-                data=df_pca[df_pca["condition"].eq(groups[1])],
-                x=f"proj{pc2proj[first]}",y=f"proj{pc2proj[second]}",
-                color=sns.color_palette("tab10")[0],s=100,alpha=0.75
-            )
-            sns_plot = sns.scatterplot(
-                data=df_pca[df_pca["condition"].eq(condi)],
-                x=f"proj{pc2proj[first]}",y=f"proj{pc2proj[second]}",
-                color=sns.color_palette("tab10")[list_colors[experiment][d]],s=100,alpha=0.75
-            )
-            plt.xlim(*(np.percentile(df_pca_extremes[f"proj{pc2proj[first]}"].to_numpy(),[1,99])+np.array([-0.1,0.1])))
-            plt.ylim(*(np.percentile(df_pca_extremes[f"proj{pc2proj[second]}"].to_numpy(),[1,99])+np.array([-0.1,0.1])))
-            sns_plot.figure.savefig(f'{saveto}/pca_projection_all_plt/pca_projection2d_{folder}_{name}_condi-{str(condi).replace(".","-")}_pc{pc2proj[first]}{pc2proj[second]}.png')
-            plt.close()
+    # # 2d projections, all conditions
+    # for d,condi in enumerate(np.sort(df_pca["condition"].unique())):
+    #     if condi == groups[1]:
+    #         continue
+    #     for first,second in ((0,1),(0,2),(1,2)):
+    #         plt.figure(figsize=(15,12))
+    #         sns_plot = sns.scatterplot(
+    #             data=df_pca[df_pca["condition"].eq(groups[1])],
+    #             x=f"proj{pc2proj[first]}",y=f"proj{pc2proj[second]}",
+    #             color=sns.color_palette("tab10")[0],s=100,alpha=0.75
+    #         )
+    #         sns_plot = sns.scatterplot(
+    #             data=df_pca[df_pca["condition"].eq(condi)],
+    #             x=f"proj{pc2proj[first]}",y=f"proj{pc2proj[second]}",
+    #             color=sns.color_palette("tab10")[list_colors[experiment][d]],s=100,alpha=0.75
+    #         )
+    #         plt.xlim(*(np.percentile(df_pca_extremes[f"proj{pc2proj[first]}"].to_numpy(),[1,99])+np.array([-0.1,0.1])))
+    #         plt.ylim(*(np.percentile(df_pca_extremes[f"proj{pc2proj[second]}"].to_numpy(),[1,99])+np.array([-0.1,0.1])))
+    #         sns_plot.figure.savefig(f'{saveto}/pca_projection_all_plt/pca_projection2d_{folder}_{name}_condi-{str(condi).replace(".","-")}_pc{pc2proj[first]}{pc2proj[second]}.png')
+    #         plt.close()
 
     # draw interactive HTML with Plotly:
     figproj = go.Figure()
-    for condi in pd.unique(df_pca["condition"]):
+    for d,condi in enumerate(np.sort(df_pca["condition"].unique())):
         figproj.add_trace(
             go.Scatter3d(
                 x=df_pca.loc[df_pca["condition"].eq(condi),f"proj{pc2proj[0]}"],
@@ -937,9 +937,9 @@ def make_pca_plots(experiment,property,groups=None,has_volume=False,is_normalize
                 mode="markers",
                 marker=dict(
                             size=4,
-                            # color=figcolors[j],
+                            color=f"rgb{tuple((np.array(sns.color_palette('tab10')[list_colors[experiment][d]])*255).astype(int))}",
                             opacity=0.8
-                       )   
+                       )
             )
         )
     figproj.update_layout(
@@ -974,9 +974,9 @@ def make_pca_plots(experiment,property,groups=None,has_volume=False,is_normalize
     return df_pca
 
 for experiment in exp_names:
-    make_pca_plots(experiment,"total-fraction",groups=extremes[experiments[experiment]],has_volume=False,is_normalized=True,non_organelle=False,saveto="plots/PCA_review_20240828")
+    make_pca_plots(experiment,"total-fraction",groups=extremes[experiments[experiment]],has_volume=False,is_normalized=True,non_organelle=False,saveto="plots/PCA_interactive_same_colors")
 
-saveto="plots/PCA_review_20240828"
+saveto="plots/PCA_interactive_same_colors"
 
 dict_pc        = {}
 dict_cosine    = {}
@@ -1066,16 +1066,16 @@ for experiment in experiments:
         for (patch,color) in zip(bplot['boxes'], colors):
             patch.set_facecolor(color)
 
-        for n,normalized in enumerate(normalizeds):
-            ax.scatter(
-                n + 1 - 0.15 + 0.3*np.random.random(size=len(normalized)),
-                normalized,
-                s=2,color=colors[n],alpha=0.3
-            )
+        # for n,normalized in enumerate(normalizeds):
+        #     ax.scatter(
+        #         n + 1 - 0.15 + 0.3*np.random.random(size=len(normalized)),
+        #         normalized,
+        #         s=2,color=colors[n],alpha=0.3
+        #     )
         ax.set_title(f"{' '.join([s if s.isupper() else s.title() for s in experiment.split()])} Perturbation\n{organelle if organelle.isupper() else organelle.title()}")
         ax.set_ylabel("Normalized Volume Fraction")
         ax.set_xlabel(f"{perturbations[experiment]} ({units[experiment]})")
-        plt.savefig(f"plots/normalized_volume_fraction/normalizedVolFraction_{experiment}_{organelle}.png",dpi=600)
+        plt.savefig(f"plots/normalized_volume_fraction/boxOnly_normalizedVolFraction_{experiment}_{organelle}.png",dpi=600)
 
 # power law
 import numpy as np

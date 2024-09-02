@@ -321,19 +321,20 @@ for organelle in organelles:
     normed_diff = (xy_drop.loc[:,"total_normed_max_x"] - xy_drop.loc[:,"total_normed_max_y"])/xy_drop.loc[:,"total_normed_max_y"]
     differences[organelle] = normed_diff
 
-    plt.figure()
-    plt.title(f"{names[organelle]} Normalized Segmented Total Volume per Cell",fontsize=18)
-    plt.xlabel("Ilastik",fontsize=18)
-    plt.ylabel("Manual Segmentation",fontsize=18)
-    plt.scatter(x,y)
-    # plt.plot(
-    #     [x.min(),x.max()],
-    #     [x.min(),x.max()]
-    # )
+    # plt.figure()
+    # plt.title(f"{names[organelle]} Normalized Segmented Total Volume per Cell",fontsize=18)
+    # plt.xlabel("Ilastik",fontsize=18)
+    # plt.ylabel("Manual Segmentation",fontsize=18)
+    # plt.scatter(x,y)
+    # # plt.plot(
+    # #     [x.min(),x.max()],
+    # #     [x.min(),x.max()]
+    # # )
 
-    # plt.show()
-    plt.savefig(f"plots/manual_segment/px_normalzied-max_scatter_{organelle}.png")
+    # # plt.show()
+    # plt.savefig(f"plots/manual_segment/px_normalzied-max_scatter_{organelle}.png")
 
+# %%
 plt.figure()
 plt.bar(np.arange(6),correlations)
 plt.xticks(np.arange(6),organelles)
@@ -363,9 +364,35 @@ for p,patch in enumerate(bplot['boxes']):
 # plt.show()
 plt.savefig("plots/manual_segment/px_normalzied-max_error-percentage.png")
 # %%
-pd.DataFrame({
+df_diff = pd.DataFrame({
 	"organelle": organelles,
 	"mean":   [differences[o].mean() for o in organelles],
 	"median": [differences[o].median() for o in organelles],
-}).to_csv("plots/manual_segment/error-percentage.csv")
+})
+df_diff.to_csv("plots/manual_segment/error-percentage.csv")
+# %%
+plt.figure()
+plt.bar(
+    np.arange(6),df_diff["mean"],
+    color='white',edgecolor='black'
+)
+plt.xticks(np.arange(6),df_diff['organelle'],fontsize=10)
+plt.xlabel("Organelle")
+plt.ylabel("Mean Fractional Difference")
+plt.savefig("plots/manual_segment/error_percentage_mean.png",dpi=600)
+plt.close()
+
+
+# %%
+plt.figure()
+plt.bar(
+    np.arange(6),df_diff["median"],
+    color='white',edgecolor='black'
+)
+plt.xticks(np.arange(6),df_diff['organelle'],fontsize=10)
+plt.xlabel("Organelle")
+plt.ylabel("median Fractional Difference")
+plt.savefig("plots/manual_segment/error_percentage_median.png",dpi=600)
+plt.close()
+
 # %%
