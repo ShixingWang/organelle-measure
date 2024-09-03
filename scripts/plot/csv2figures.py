@@ -1123,34 +1123,33 @@ for orga in [*organelles,"non-organelle"]:
     dfs[orga] = np.log(df_bycell.loc[df_bycell["folder"].eq("EYrainbow_glucose_largerBF") & df_bycell["organelle"].eq(orga),"total"].reset_index().drop("index",axis=1))
 dfs.replace([np.inf, -np.inf], np.nan, inplace=True)
 dfs.dropna(axis=0,inplace=True)
-dfs = dfs[dfs['non-organelle']>2]
+
 df_scambled = dfs[dfs["condition"].eq(100)]
 df_scambled["cell-volume"] = np.random.permutation(df_scambled["cell-volume"])
 
 
 # Plot
-plt.rcParams['font.size'] = '26'
-fig,ax = plt.subplots(figsize=(12,9))
+plt.rcParams['font.size'] = '16'
+fig,ax = plt.subplots()
 for i,condi in enumerate(np.sort(dfs["condition"].unique())):
     print(i,condi,list_colors["glucose"][i])
     # ax.axis("equal")
-
-    ax.set_xlim(2,7)
-    ax.set_ylim(3,7)
     ax.scatter(
         x=dfs.loc[dfs["condition"].eq(condi),"non-organelle"],
         y=dfs.loc[dfs["condition"].eq(condi),"cell-volume"],
+        s=12,
         label=f"{condi/100*2}% glucose",
-        color=sns.color_palette("tab10")[list_colors["glucose"][i]],alpha=0.5,edgecolors='w'
+        color=sns.color_palette("tab10")[list_colors["glucose"][i]],alpha=0.6,edgecolors='w'
     )
     ax.set_adjustable('datalim')
-inlet = fig.add_axes([0.62,0.2,0.25,0.25])
+inlet = fig.add_axes([0.65,0.25,0.25,0.25])
 inlet.axis("equal")
 inlet.set_xbound(1.5,7.5)
 inlet.set_ybound(3,8)
 inlet.scatter(
     x=df_scambled["non-organelle"],
     y=df_scambled["cell-volume"],
+    s=12,
     label="scambled",
     color="grey",alpha=0.5,edgecolors='w'
 )
@@ -1158,7 +1157,56 @@ ax.set_adjustable('datalim')
 x_min,x_max = dfs["non-organelle"].min(),dfs["non-organelle"].max()
 y_min,y_max = dfs["cell-volume"].min(),dfs["cell-volume"].max()
 ax.plot(
-    [x_min,x_max],[y_min,y_min+(x_max-x_min)],"k--"
+    [x_min,x_max],[y_max-(x_max-x_min)+1.5,y_max+1.5],"k--"
+)
+ax.plot(
+    [x_min,x_max],[y_max-(2/3)*(x_max-x_min),y_max],"r--"
+)
+ax.set_xlabel(r"$log(V_{cyto})$")
+ax.set_ylabel(r"$log(V_{cell})$")
+# ax.legend()
+
+plt.savefig("plots/power_law/power_law_rectangular_lowincluded.png",dpi=600)
+plt.close()
+
+
+# exclude the cells with too little non-organelle volumes
+dfs = dfs[dfs['non-organelle']>2]
+df_scambled = dfs[dfs["condition"].eq(100)]
+df_scambled["cell-volume"] = np.random.permutation(df_scambled["cell-volume"])
+
+plt.rcParams['font.size'] = '16'
+fig,ax = plt.subplots()
+for i,condi in enumerate(np.sort(dfs["condition"].unique())):
+    print(i,condi,list_colors["glucose"][i])
+    # ax.axis("equal")
+
+    ax.set_xlim(2,7.5)
+    ax.set_ylim(3,7.5)
+    ax.scatter(
+        x=dfs.loc[dfs["condition"].eq(condi),"non-organelle"],
+        y=dfs.loc[dfs["condition"].eq(condi),"cell-volume"],
+        s=12,
+        label=f"{condi/100*2}% glucose",
+        color=sns.color_palette("tab10")[list_colors["glucose"][i]],alpha=0.6,edgecolors='w'
+    )
+    ax.set_adjustable('datalim')
+inlet = fig.add_axes([0.65,0.25,0.25,0.25])
+inlet.axis("equal")
+inlet.set_xbound(1.5,7.5)
+inlet.set_ybound(3,8)
+inlet.scatter(
+    x=df_scambled["non-organelle"],
+    y=df_scambled["cell-volume"],
+    s=12,
+    label="scambled",
+    color="grey",alpha=0.5,edgecolors='w'
+)
+ax.set_adjustable('datalim')
+x_min,x_max = dfs["non-organelle"].min(),dfs["non-organelle"].max()
+y_min,y_max = dfs["cell-volume"].min(),dfs["cell-volume"].max()
+ax.plot(
+    [x_min,x_max],[y_min-0.5,y_min+(x_max-x_min)-0.5],"k--"
 )
 ax.plot(
     [x_min,x_max],[y_min+0.5,y_min+0.5+(2/3)*(x_max-x_min)],"r--"
@@ -1166,8 +1214,9 @@ ax.plot(
 ax.set_xlabel(r"$log(V_{cyto})$")
 ax.set_ylabel(r"$log(V_{cell})$")
 # ax.legend()
-plt.savefig("data/power_law/power_law_rectangular.png")
+plt.savefig("plots/power_law/power_law_rectangular.png",dpi=600)
 plt.close()
+
 
 
 # generalize to other pairs of volumes.

@@ -1,9 +1,11 @@
+# %%
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 # import seaborn as sns
 from sklearn.linear_model import LinearRegression
 
+# %%
 # plt.xlabel("Time / min")
 # plt.ylabel("OD multiplication")
 # plt.plot(
@@ -192,7 +194,8 @@ from sklearn.linear_model import LinearRegression
 # plt.ylabel(r"1 / Doubling Time (hour$^{-1}$)")
 # plt.savefig("data/growthrate/rebuttal_growth_rate_errorbar.png",dpi=600)
 
-# data from replicates
+
+# %% data from replicates
 od_replicate = pd.read_csv("plots/growthrate/rebuttal_OD_replicate.csv")
 od_replicate["time"] = pd.to_datetime(od_replicate["time"],format="%H:%M")
 first_times = od_replicate[["group","replicate","time"]].groupby(["group","replicate"]).first()
@@ -204,7 +207,7 @@ od_replicate["minute"] = (od_replicate["time"] - od_replicate["first_times"]).dt
 od_replicate["normalized"] = od_replicate["OD"] / od_replicate["first_ODs"]
 od_replicate.reset_index(inplace=True)
 
-
+# %%
 linear = LinearRegression(fit_intercept=False)
 means = {}
 stds  = {}
@@ -228,7 +231,7 @@ for cond in (conditions:=od_replicate["group"].unique()):
     means[cond] = np.mean(rates)
     stds[cond]  = np.std(rates)
 
-# bar plot
+# %% bar plot
 list_colors = [1,2,3,4,0,5]
 plt.rcParams["figure.autolayout"]=True
 plt.rcParams['font.size'] = '18'
@@ -245,9 +248,9 @@ plt.xticks(
 )
 plt.xlabel("Glucose concentration m/v")
 plt.ylabel(r"Growth rate (hour$^{-1}$)")
-plt.savefig("plots/growthrate/growthrate_replicate_errorbars.png",dpi=300)
+plt.savefig("plots/growthrate/growthrate_replicate_errorbars.png",dpi=600)
 
-# line plot
+# %% line plot
 plt.rcParams['font.size'] = '16'
 plt.figure()
 for c,cond in enumerate(conditions):
@@ -269,9 +272,9 @@ for c,conc in enumerate(["0","0.01%","0.1%","1%","2%","4%"]):
 plt.legend()
 plt.xlabel("Time (min)")
 plt.ylabel("OD Multiplication")
-plt.savefig("plots/growthrate/growthrate_replicate_line.png",dpi=300)
+plt.savefig("plots/growthrate/growthrate_replicate_line.png",dpi=600)
 
-# exponential curve
+# %% exponential curve
 plt.rcParams['font.size'] = '16'
 plt.figure()
 for c,cond in enumerate(conditions):
@@ -298,4 +301,106 @@ for c,conc in enumerate(["0","0.01%","0.1%","1%","2%","4%"]):
 plt.legend()
 plt.xlabel("Time (min)")
 plt.ylabel("OD Multiplication")
-plt.savefig("plots/growthrate/growthrate_replicate_expcurve.png",dpi=300)
+plt.savefig("plots/growthrate/growthrate_replicate_expcurve.png",dpi=600)
+
+# %% [markdown]
+# Only include date before 3 hours
+
+# %%
+od_replicate = od_replicate[od_replicate["minute"].lt(220)]
+# %%
+linear = LinearRegression(fit_intercept=False)
+means = {}
+stds  = {}
+for cond in (conditions:=od_replicate["group"].unique()):
+    rates = []
+    df_cond = od_replicate[od_replicate["group"].eq(cond)]
+    for replicate in df_cond["replicate"].unique():
+        cond_hour = df_cond.loc[
+                                df_cond["replicate"].eq(replicate),
+                                "minute"
+                            ].to_numpy()/60.0
+        cond_norm = df_cond.loc[
+                                df_cond["replicate"].eq(replicate),
+                                "normalized"
+                            ].to_numpy()
+        linear.fit(
+                cond_hour.reshape(-1,1),
+                np.log(cond_norm)
+        )
+        rates.append(linear.coef_[0])
+    means[cond] = np.mean(rates)
+    stds[cond]  = np.std(rates)
+
+# %% bar plot
+list_colors = [1,2,3,4,0,5]
+plt.rcParams["figure.autolayout"]=True
+plt.rcParams['font.size'] = '18'
+plt.figure()
+for c,cond in enumerate(conditions):
+    plt.bar(
+        [c], height = means[cond],
+               yerr =  stds[cond], 
+        capsize=15, color=plt.color_sequences['tab10'][list_colors[c]]
+    )
+plt.xticks(
+    ticks=np.arange(len(conditions)),
+    labels=["0","0.01%","0.1%","1%","2%","4%"]
+)
+plt.xlabel("Glucose concentration m/v")
+plt.ylabel(r"Growth rate (hour$^{-1}$)")
+plt.savefig("plots/growthrate/3hours_growthrate_replicate_errorbars.png",dpi=600)
+
+# %% line plot
+plt.rcParams['font.size'] = '16'
+plt.figure()
+for c,cond in enumerate(conditions):
+    df_cond = od_replicate[od_replicate["group"].eq(cond)]
+    for replicate in df_cond["replicate"].unique():
+        df_rep = df_cond[df_cond["replicate"].eq(replicate)]
+        plt.plot(
+            df_rep["minute"], df_rep["normalized"],
+            marker="o", alpha=0.75,
+            color=plt.color_sequences['tab10'][list_colors[c]]
+        )
+for c,conc in enumerate(["0","0.01%","0.1%","1%","2%","4%"]):
+    plt.plot(
+        [],[],
+        marker="o", alpha=0.75,
+        color=plt.color_sequences['tab10'][list_colors[c]],
+        label=f"{conc} glucose"
+    )
+plt.legend()
+plt.xlabel("Time (min)")
+plt.ylabel("OD Multiplication")
+plt.savefig("plots/growthrate/3hours_growthrate_replicate_line.png",dpi=600)
+
+# %% exponential curve
+plt.rcParams['font.size'] = '16'
+plt.figure()
+for c,cond in enumerate(conditions):
+    df_cond = od_replicate[od_replicate["group"].eq(cond)]
+    plt.plot(
+        np.arange(220), np.exp(np.arange(220)*means[cond]/60.0),
+        alpha=0.75, color=plt.color_sequences['tab10'][list_colors[c]]
+    )
+    for replicate in df_cond["replicate"].unique():
+        df_rep = df_cond[df_cond["replicate"].eq(replicate)]
+        plt.scatter(
+            df_rep["minute"], df_rep["normalized"],
+            marker="o", alpha=0.75,
+            color=plt.color_sequences['tab10'][list_colors[c]]
+        )
+# legend
+for c,conc in enumerate(["0","0.01%","0.1%","1%","2%","4%"]):
+    plt.plot(
+        [],[],
+        marker="o", alpha=0.75,
+        color=plt.color_sequences['tab10'][list_colors[c]],
+        label=f"{conc} glucose"
+    )
+plt.legend()
+plt.xlabel("Time (min)")
+plt.ylabel("OD Multiplication")
+plt.savefig("plots/growthrate/3hours_growthrate_replicate_expcurve.png",dpi=600)
+# %%
