@@ -94,6 +94,14 @@ bycell_1segmented_by1["count"]     = df_1segmented_by1[["organelle","field","cel
 bycell_1segmented_by1["volume-fraction"] = bycell_1segmented_by1["total-um3"] / bycell_1segmented_by1["cell-volume-um3"]
 bycell_1segmented_by1.reset_index(inplace=True)
 
+# for organelle in organelles:
+# 	print(organelle, len(bycell_1segmented_by1[bycell_1segmented_by1['organelle'].eq(organelle)]))
+# >>> peroxisome 202
+# >>> vacuole 403
+# >>> ER 518
+# >>> golgi 433
+# >>> mitochondria 275
+# >>> LD 356
 
 # # 6-color cells segmented by 1-color ilastik
 # dfs_read = []

@@ -35,6 +35,15 @@ df_orga = pd.concat(
 df_cell.loc[:,"effective-volume"] = (px_x*px_y)*np.sqrt(px_x*px_y)*(2.)*df_cell.loc[:,"area"]*np.sqrt(df_cell.loc[:,"area"])/np.sqrt(np.pi) 
 pivot_cell_bycell = df_cell.set_index(["organelle","field","idx-cell"])
 
+# for organelle in organelles:
+# 	print(organelle, len(df_cell[df_cell['organelle'].eq(organelle)]))
+# >>> PX 662
+# >>> VO 840
+# >>> ER 870
+# >>> GL 363
+# >>> MT 661
+# >>> LD 230
+
 
 df_orga["volume-micron"] = np.empty_like(df_orga.index)
 df_orga.loc[df_orga["organelle"].eq("VO"),"volume-micron"] = (px_x*px_y)*np.sqrt(px_x*px_y)*(2.)*df_orga.loc[df_orga["organelle"].eq("VO"),"volume-pixel"]*np.sqrt(df_orga.loc[df_orga["organelle"].eq("VO"),"volume-pixel"])/np.sqrt(np.pi) 
@@ -76,16 +85,16 @@ organelle_names = {
 }
 fluorescence_names = {
     "PX": {
-        "DAPI": "mTagBFP2-SKL",
         "FITC": "PEX1-2GFP",
+        "DAPI": "mTagBFP2-SKL",
     },
     "VO": {
-        "CFP" : "VPH1-mTFP1",
         "FITC": "GFP-PHO8",
+        "CFP" : "VPH1-mTFP1",
     },
     "ER": {
-        "FITC" : "SEC61-sfGFP",
         "TRITC": "SS-mCherry-HDEL",
+        "FITC" : "SEC61-sfGFP",
     },
     "GL": {
         "TRITC": "CHS5-mCherry",
@@ -123,7 +132,7 @@ for organelle in organelles:
         # 				  "mean"
         # 				]
     
-    cameras = list(dict_totals.keys())
+    cameras = list(fluorescence_names[organelle].keys())
     array_totals = np.vstack((dict_totals[cameras[0]],dict_totals[cameras[1]]))
     if organelle=="VO":
         array_totals[array_totals==0] = np.nan

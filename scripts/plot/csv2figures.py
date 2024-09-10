@@ -1116,13 +1116,75 @@ import seaborn as sns
 #     dfs.append(df)
 # dfs = pd.concat(dfs,ignore_index=True)
 
-dfs = df_bycell.loc[df_bycell["folder"].eq("EYrainbow_glucose_largerBF") & df_bycell["organelle"].eq("ER"),["condition","cell-volume"]]
+dfs = df_bycell.loc[
+                    df_bycell["folder"].eq("EYrainbow_glucose_largerBF")
+                  & df_bycell["organelle"].eq("ER"),
+                    ["condition","cell-volume"]
+                ]
 dfs = dfs.reset_index().drop("index",axis=1)
 dfs["cell-volume"] = np.log(dfs["cell-volume"])
 for orga in [*organelles,"non-organelle"]:
-    dfs[orga] = np.log(df_bycell.loc[df_bycell["folder"].eq("EYrainbow_glucose_largerBF") & df_bycell["organelle"].eq(orga),"total"].reset_index().drop("index",axis=1))
+    dfs[orga] = np.log(
+                        df_bycell.loc[
+                                      df_bycell["folder"].eq("EYrainbow_glucose_largerBF") 
+                                    & df_bycell["organelle"].eq(orga),"total"
+                                ].reset_index().drop("index",axis=1)
+                    )
 dfs.replace([np.inf, -np.inf], np.nan, inplace=True)
 dfs.dropna(axis=0,inplace=True)
+
+x = dfs["non-organelle"].values.reshape(-1,1)
+y = dfs["cell-volume"].values
+fitter.fit(x,y)
+print("without exclusion", f"pooled" ,fitter.coef_, fitter.intercept_)
+# >>> without exclusion pooled [0.42146724] 3.5076067960600694
+dfs = dfs[dfs['non-organelle']>2]
+x = dfs["non-organelle"].values.reshape(-1,1)
+y = dfs["cell-volume"].values
+fitter.fit(x,y)
+print("with exclusion", f"pooled" ,fitter.coef_, fitter.intercept_)
+# >>> with exclusion pooled [0.50221085] 3.142924975964997
+
+x = dfs["non-organelle"].values
+y = dfs["cell-volume"].values
+res = scipy.odr.ODR(
+                    scipy.odr.Data(x,y),
+                    scipy.odr.unilinear
+                ).run().beta[0]
+print("without exclusion", f"symmetric" , res)
+# >>> without exclusion symmetric 0.45422110021931483
+threhold1 = np.percentile(dfs['non-organelle'],10) 
+threhold2 = np.percentile(dfs['cell-volume'],10) 
+dfs = dfs[dfs['non-organelle']>threhold1]
+dfs = dfs[dfs['cell-volume']>threhold2]
+x = dfs["non-organelle"].values
+y = dfs["cell-volume"].values
+res = scipy.odr.ODR(
+                    scipy.odr.Data(x,y),
+                    scipy.odr.unilinear
+                ).run().beta[0]
+print("with exclusion", f"symmetric" , res)
+
+
+fitter = LinearRegression()
+for cond in np.sort(dfs["condition"].unique()):
+    x = dfs.loc[dfs["condition"].eq(cond),"non-organelle"].values.reshape(-1,1)
+    y = dfs.loc[dfs["condition"].eq(cond),"cell-volume"].values
+    fitter.fit(x,y)
+    print("with exclusion", f"{cond*2/100}% glucose" ,fitter.coef_, fitter.intercept_)
+# >>> without exclusion 0.0% glucose [0.36748129] 3.8123584248286857
+# >>> without exclusion 0.01% glucose [0.48904931] 3.1963293062829417
+# >>> without exclusion 0.1% glucose [0.45168254] 3.447715116047131
+# >>> without exclusion 1.0% glucose [0.65527128] 2.2475956042518463
+# >>> without exclusion 2.0% glucose [0.6174451] 2.477665894757461
+# >>> without exclusion 4.0% glucose [0.66546864] 2.260198088347158
+# >>> 
+# >>> with exclusion 0.0% glucose [0.44245338] 3.4978532063642183
+# >>> with exclusion 0.01% glucose [0.61766572] 2.607062652666553
+# >>> with exclusion 0.1% glucose [0.57374911] 2.913059839803107
+# >>> with exclusion 1.0% glucose [0.708232] 1.988237369816059
+# >>> with exclusion 2.0% glucose [0.69546985] 2.1050524593477573
+# >>> with exclusion 4.0% glucose [0.66886946] 2.243887408369273
 
 df_scambled = dfs[dfs["condition"].eq(100)]
 df_scambled["cell-volume"] = np.random.permutation(df_scambled["cell-volume"])

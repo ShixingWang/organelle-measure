@@ -31,7 +31,18 @@ exp_folder  = [experiments[i] for i in exp_names]
 extremes    = {"paperRebuttal": [0.,    100.]}
 list_colors = {"rebuttal": [1,2,3,4,0,5]}
 
-df_bycell = read_results(Path("./data/results"),subfolders,(px_x,px_y,px_z))
+df_bycell = read_results(Path("./data"),subfolders,(px_x,px_y,px_z))
+
+# for condi in np.sort(df_bycell['condition'].unique()):
+# 	print(f"{condi*2/100}%",len(df_bycell[df_bycell['condition'].eq(condi) & df_bycell['organelle'].eq("vacuole")]))
+# >>> 0.0% 1041
+# >>> 0.01% 2487
+# >>> 0.1% 1217
+# >>> 1.0% 1992
+# >>> 2.0% 1253
+# >>> 4.0% 1042
+
+
 
 # DATAFRAME FOR CORRELATION COEFFICIENT
 pv_bycell = df_bycell.set_index(['folder','condition','field','idx-cell'])
