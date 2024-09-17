@@ -711,7 +711,9 @@ for folder in subfolders:
         )
 
 # PCA 
-def make_pca_plots(experiment,property,groups=None,has_volume=False,is_normalized=True,non_organelle=False,saveto="./plots/"):
+def make_pca_plots(experiment,property,groups=None,non_organelle=False,has_volume=False,
+                    is_normalized=True,divided_by_max=False,divided_by_median=False,
+                    saveto="./plots/"):
     for pca_subfolder in [ "pca_data/",
                            "pca_compare/",
                            "pca_projection_extremes/",
@@ -741,6 +743,13 @@ def make_pca_plots(experiment,property,groups=None,has_volume=False,is_normalize
         columns = ["cell volume",*columns]
         num_pc += 1
     
+    if divided_by_max:
+        for col in columns:
+            df_pca[col] = df_pca[col] / df_pca[col].max()
+    if divided_by_median:
+        for col in columns:
+            df_pca[col] = df_pca[col] / df_pca[col].median()        
+
     if is_normalized:
         for col in columns:
             df_pca[col] = (df_pca[col]-df_pca[col].mean())/df_pca[col].std()
