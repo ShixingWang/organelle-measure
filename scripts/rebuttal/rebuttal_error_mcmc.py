@@ -10,9 +10,9 @@ from skimage import io,morphology,measure,filters,segmentation
 import h5py
 
 organelles = [
-    "peroxisome",
-    "vacuole",
-    "ER",
+    # "peroxisome",
+    # "vacuole",
+    # "ER",
     "golgi",
     "mitochondria",
     "LD"
@@ -25,7 +25,7 @@ organelles = [
 # instead, the first input will be altered by the functions.
 def random_sample(args):
     # return np.random.random(args)
-    return 0.1 + 0.8*np.random.random(args)
+    return 0.25 + 0.5*np.random.random(args)
 
 def upsample(mask,prob):
     dilated = morphology.binary_dilation(mask)
@@ -52,6 +52,7 @@ stem = "EYrainbow_glu-100_field-3"
 path_cell = f"images/cell/EYrainbow_glucose_largerBF/binCell_{stem}.tif"
 img_cell = io.imread(str(path_cell))
 
+# %%
 dfs = []
 for organelle in organelles:
     print(f"Start processing: {organelle}")
@@ -96,7 +97,7 @@ for organelle in organelles:
         samples_count[0] = len(measure.regionprops(label_organelles))
 
         samples_mean = np.empty(N_sample)
-        samples_mean[0] = samples_total[0] / samples_count[0]
+        samples_mean[0] = 0 if samples_count[0]==0 else samples_total[0] / samples_count[0]
 
         for i in range(N_sample-1):
             seed = np.random.random()
@@ -111,64 +112,146 @@ for organelle in organelles:
                 mask_dynamic = segmentation.watershed(-img_ref_crop,mask=mask_dynamic)
             label_organelles = measure.label(mask_dynamic)
             samples_count[i+1] = len(measure.regionprops(label_organelles))
-            samples_mean[i+1] = samples_total[i+1] / samples_count[i+1]
+            samples_mean[i+1] = 0 if samples_count[i+1]==0 else samples_total[i+1] / samples_count[i+1]
 
         index.append(cell.label)
         total_trues.append(samples_total[0])
         total_means.append(samples_total.mean())
         total_stdvs.append(samples_total.std())
 
+        count_trues.append(samples_count[0])
+        count_means.append(samples_count.mean())
+        count_stdvs.append(samples_count.std())
+
+        mean_trues.append(samples_mean[0])
+        mean_means.append(samples_mean.mean())
+        mean_stdvs.append(samples_mean.std())
+
         print(f"... simulated cell #{cell.label}")
     dfs.append(pd.DataFrame({
         "organelle": organelle,
         "index"    : index,
-        "segmented": trues,
-        "average"  : means,
-        "standard_deviation": stdvs
+        "total_true":  total_trues,
+        "total_mean":  total_means,
+        "total_stdv":  total_stdvs,
+        "count_trues": count_trues,
+        "count_means": count_means,
+        "count_stdvs": count_stdvs,
+        "mean_trues":  mean_trues,
+        "mean_means":  mean_means,
+        "mean_stdvs":  mean_stdvs,
     }))
     print(f"Finished: {organelle}")
 
-    
 df = pd.concat(dfs,ignore_index=True)
-df.to_csv("plots/rebuttal_error/mcmcShankar_10-90.csv",index=False)
+df.to_csv("plots/rebuttal_error/mcmcMore_25-75.csv",index=False)
 
 # %%
 df = pd.read_csv("plots/rebuttal_error/mcmcShankar_25-75.csv")
 # %%
-df["std/mean"]  = df["standard_deviation"]/df["average"]
-df["diff"]      = df["segmented"] - df["average"]
-df["diff/mean"] = df["diff"]/df["average"]
-df = df[df['diff/mean'].lt(200)]
+df = pd.read_csv("plots/rebuttal_error/mcmcMore_25-75.csv")
+# %%
+df["total_std/mean"]  = df["total_stdv"] / df["total_mean"]
+df["total_diff"]      = df["total_true"] - df["total_mean"]
+df["total_diff/mean"] = df["total_diff"] / df["total_mean"]
+
+df["count_std/mean"]  = df["count_stdvs"] / df["count_means"]
+df["count_diff"]      = df["count_trues"] - df["count_means"]
+df["count_diff/mean"] = df["count_diff"]  / df["count_means"]
+
+df["mean_std/mean"]  = df["mean_stdvs"] / df["mean_means"]
+df["mean_diff"]      = df["mean_trues"] - df["mean_means"]
+df["mean_diff/mean"] = df["mean_diff"]  / df["mean_means"]
+
+# df = df[df['diff/mean'].lt(200)]
 df.dropna(inplace=True)
 
 # %%
 plt.rcParams["figure.autolayout"]=True
 plt.rcParams['font.size'] = '14'
-by_organlle = df[["organelle","std/mean","diff/mean"]].groupby("organelle").mean()
+by_organlle = df[["organelle","total_std/mean","total_diff/mean"]].groupby("organelle").mean()
 plt.figure()
 plt.bar(
-    np.arange(6), by_organlle.loc[organelles,'std/mean'],
+    np.arange(3), by_organlle.loc[organelles,'total_std/mean'],
     color='1', edgecolor='k', label="upper error"
 )
 plt.bar(
-    np.arange(6), -by_organlle.loc[organelles,'std/mean'],
+    np.arange(3), -by_organlle.loc[organelles,'total_std/mean'],
     color='1', edgecolor='k', hatch='/', label="lower error"
 )
 # plt.scatter(
-#     np.arange(6),by_organlle.loc[organelles,"diff/mean"],
+#     np.arange(3),by_organlle.loc[organelles,"total_diff/mean"],
 #     c='k',marker="x", label="measured value"
 # )
 plt.legend(fontsize=14)
 plt.xticks(
-    ticks=np.arange(6),
+    ticks=np.arange(3),
     labels=organelles,
     fontsize=11
 )
+plt.title("Total Volume")
 plt.xlabel("Organelle",fontsize='20')
 plt.ylabel("Segmentation Error",fontsize='20')
 # plt.show()
-plt.savefig("plots/rebuttal_error/mcmcShankar_25-75_bar.png",dpi=600)
+plt.savefig("plots/rebuttal_error/3organelles_mcmcMore_25-75_bar_total.png",dpi=600)
 
+# %%
+plt.rcParams["figure.autolayout"]=True
+plt.rcParams['font.size'] = '14'
+by_organlle = df[["organelle","count_std/mean","count_diff/mean"]].groupby("organelle").mean()
+plt.figure()
+plt.bar(
+    np.arange(3), by_organlle.loc[organelles,'count_std/mean'],
+    color='1', edgecolor='k', label="upper error"
+)
+plt.bar(
+    np.arange(3), -by_organlle.loc[organelles,'count_std/mean'],
+    color='1', edgecolor='k', hatch='/', label="lower error"
+)
+# plt.scatter(
+#     np.arange(3),by_organlle.loc[organelles,"count_diff/mean"],
+#     c='k',marker="x", label="measured value"
+# )
+plt.legend(fontsize=14)
+plt.xticks(
+    ticks=np.arange(3),
+    labels=organelles,
+    fontsize=11
+)
+plt.title("Organelle Population")
+plt.xlabel("Organelle",fontsize='20')
+plt.ylabel("Segmentation Error",fontsize='20')
+# plt.show()
+plt.savefig("plots/rebuttal_error/3organelles_mcmcMore_25-75_bar_count.png",dpi=600)
+
+# %%
+plt.rcParams["figure.autolayout"]=True
+plt.rcParams['font.size'] = '14'
+by_organlle = df[["organelle","mean_std/mean","mean_diff/mean"]].groupby("organelle").mean()
+plt.figure()
+plt.bar(
+    np.arange(3), by_organlle.loc[organelles,'mean_std/mean'],
+    color='1', edgecolor='k', label="upper error"
+)
+plt.bar(
+    np.arange(3), -by_organlle.loc[organelles,'mean_std/mean'],
+    color='1', edgecolor='k', hatch='/', label="lower error"
+)
+# plt.scatter(
+#     np.arange(3),by_organlle.loc[organelles,"mean_diff/mean"],
+#     c='k',marker="x", label="measured value"
+# )
+plt.legend(fontsize=14)
+plt.xticks(
+    ticks=np.arange(3),
+    labels=organelles,
+    fontsize=11
+)
+plt.title("Average Volume")
+plt.xlabel("Organelle",fontsize='20')
+plt.ylabel("Segmentation Error",fontsize='20')
+# plt.show()
+plt.savefig("plots/rebuttal_error/3organelles_mcmcMore_25-75_bar_average.png",dpi=600)
 # %%
 for organelle in organelles:
     df_organelle = df[df["organelle"].eq(organelle)]

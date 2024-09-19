@@ -2,6 +2,7 @@
 data/
 test/
 images/
+plots/
 
 *.nd2
 **/pairwise_rebuttal.png
