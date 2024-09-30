@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from skimage import io,morphology,measure,filters,segmentation
 import h5py
+from batch_apply import batch_apply
 
 organelles = [
     # "peroxisome",
@@ -46,105 +47,124 @@ def downsample(mask,prob):
     return None
 
 # %%
-N_sample = 20000
-stem = "EYrainbow_glu-100_field-3"
+def simulate1fov(folder_in,folder_out,stem):
+    N_sample = 20000
+    # stem = "EYrainbow_glu-100_field-3"
+    finished = [p.stem.partition("25-75_")[2] for p in Path("plots/rebuttal_error/optimization").glob("*.csv")]
+    if stem in finished:
+        print(f"Already finished: {stem}")
+        return
 
-path_cell = f"images/cell/EYrainbow_glucose_largerBF/binCell_{stem}.tif"
-img_cell = io.imread(str(path_cell))
+
+    path_cell = f"images/cell/{folder_in}/binCellGreenClrBdr_{stem}.tif"
+    img_cell = io.imread(str(path_cell))
+
+    dfs = []
+    for organelle in organelles:
+        print(f"Start processing: {organelle}")
+        path_organelle = f"images/preprocessed/{folder_in}/probability_{organelle}_{stem}.h5"
+        with h5py.File(str(path_organelle)) as h5:
+            img_orga = h5["exported_data"][1]
+
+        path_reference = f"images/preprocessed/{folder_in}/{organelle}_{stem}.tif"
+        img_reference  = io.imread(str(path_reference))
+
+        index = []
+        total_trues = []
+        total_means = []
+        total_stdvs = []
+
+        count_trues = []
+        count_means = []
+        count_stdvs = []
+
+        mean_trues  = []
+        mean_means  = []
+        mean_stdvs  = []
+        for cell in measure.regionprops(img_cell):
+            min_row, min_col, max_row, max_col = cell.bbox
+            img_cell_crop = cell.image
+
+            img_orga_crop = img_orga[:,min_row:max_row,min_col:max_col]
+            for z in range(img_orga_crop.shape[0]):
+                img_orga_crop[z] = img_orga_crop[z] * img_cell_crop
+
+            mask_selected = (img_orga_crop > 0.5)
+            mask_dynamic  = np.copy(mask_selected)
+
+            samples_total = np.empty(N_sample)
+            samples_total[0] = np.count_nonzero(mask_selected)
+
+            samples_count = np.empty(N_sample)
+            if organelle in ["peroxisome","golgi","LD"]:
+                img_ref_crop = img_reference[:,min_row:max_row,min_col:max_col]
+                mask_selected = segmentation.watershed(-img_ref_crop,mask=mask_selected)
+            label_organelles = measure.label(mask_selected)
+            samples_count[0] = len(measure.regionprops(label_organelles))
+
+            samples_mean = np.empty(N_sample)
+            samples_mean[0] = 0 if samples_count[0]==0 else samples_total[0] / samples_count[0]
+
+            for i in range(N_sample-1):
+                seed = np.random.random()
+                if seed < 0.5:
+                    downsample(mask_dynamic,img_orga_crop)
+                else:
+                    upsample(  mask_dynamic,img_orga_crop)
+                samples_total[i+1] = np.count_nonzero(mask_dynamic)
+
+                # watershed, count, and average
+                if organelle in ["peroxisome","golgi","LD"]:
+                    mask_dynamic = segmentation.watershed(-img_ref_crop,mask=mask_dynamic)
+                label_organelles = measure.label(mask_dynamic)
+                samples_count[i+1] = len(measure.regionprops(label_organelles))
+                samples_mean[i+1] = 0 if samples_count[i+1]==0 else samples_total[i+1] / samples_count[i+1]
+
+            index.append(cell.label)
+            total_trues.append(samples_total[0])
+            total_means.append(samples_total.mean())
+            total_stdvs.append(samples_total.std())
+
+            count_trues.append(samples_count[0])
+            count_means.append(samples_count.mean())
+            count_stdvs.append(samples_count.std())
+
+            mean_trues.append(samples_mean[0])
+            mean_means.append(samples_mean.mean())
+            mean_stdvs.append(samples_mean.std())
+
+            print(f"... simulated cell #{cell.label}")
+        dfs.append(pd.DataFrame({
+            "organelle": organelle,
+            "index"    : index,
+            "total_true":  total_trues,
+            "total_mean":  total_means,
+            "total_stdv":  total_stdvs,
+            "count_trues": count_trues,
+            "count_means": count_means,
+            "count_stdvs": count_stdvs,
+            "mean_trues":  mean_trues,
+            "mean_means":  mean_means,
+            "mean_stdvs":  mean_stdvs,
+        }))
+        print(f"Finished: {organelle}")
+
+    df = pd.concat(dfs,ignore_index=True)
+    df.to_csv(f"{folder_out}/mcmc_25-75_{stem}.csv",index=False)
+    
+    return None
 
 # %%
-dfs = []
-for organelle in organelles:
-    print(f"Start processing: {organelle}")
-    path_organelle = f"images/preprocessed/EYrainbow_glucose_largerBF/probability_{organelle}_{stem}.h5"
-    with h5py.File(str(path_organelle)) as h5:
-        img_orga = h5["exported_data"][1]
-
-    path_reference = f"images/preprocessed/EYrainbow_glucose_largerBF/{organelle}_{stem}.tif"
-    img_reference  = io.imread(str(path_reference))
-
-    index = []
-    total_trues = []
-    total_means = []
-    total_stdvs = []
-
-    count_trues = []
-    count_means = []
-    count_stdvs = []
-
-    mean_trues  = []
-    mean_means  = []
-    mean_stdvs  = []
-    for cell in measure.regionprops(img_cell):
-        min_row, min_col, max_row, max_col = cell.bbox
-        img_cell_crop = cell.image
-        
-        img_orga_crop = img_orga[:,min_row:max_row,min_col:max_col]
-        for z in range(img_orga_crop.shape[0]):
-            img_orga_crop[z] = img_orga_crop[z] * img_cell_crop
-
-        mask_selected = (img_orga_crop > 0.5)
-        mask_dynamic  = np.copy(mask_selected)
-
-        samples_total = np.empty(N_sample)
-        samples_total[0] = np.count_nonzero(mask_selected)
-
-        samples_count = np.empty(N_sample)
-        if organelle in ["peroxisome","golgi","LD"]:
-            img_ref_crop = img_reference[:,min_row:max_row,min_col:max_col]
-            mask_selected = segmentation.watershed(-img_ref_crop,mask=mask_selected)
-        label_organelles = measure.label(mask_selected)
-        samples_count[0] = len(measure.regionprops(label_organelles))
-
-        samples_mean = np.empty(N_sample)
-        samples_mean[0] = 0 if samples_count[0]==0 else samples_total[0] / samples_count[0]
-
-        for i in range(N_sample-1):
-            seed = np.random.random()
-            if seed < 0.5:
-                downsample(mask_dynamic,img_orga_crop)
-            else:
-                upsample(  mask_dynamic,img_orga_crop)
-            samples_total[i+1] = np.count_nonzero(mask_dynamic)
-
-            # watershed, count, and average
-            if organelle in ["peroxisome","golgi","LD"]:
-                mask_dynamic = segmentation.watershed(-img_ref_crop,mask=mask_dynamic)
-            label_organelles = measure.label(mask_dynamic)
-            samples_count[i+1] = len(measure.regionprops(label_organelles))
-            samples_mean[i+1] = 0 if samples_count[i+1]==0 else samples_total[i+1] / samples_count[i+1]
-
-        index.append(cell.label)
-        total_trues.append(samples_total[0])
-        total_means.append(samples_total.mean())
-        total_stdvs.append(samples_total.std())
-
-        count_trues.append(samples_count[0])
-        count_means.append(samples_count.mean())
-        count_stdvs.append(samples_count.std())
-
-        mean_trues.append(samples_mean[0])
-        mean_means.append(samples_mean.mean())
-        mean_stdvs.append(samples_mean.std())
-
-        print(f"... simulated cell #{cell.label}")
-    dfs.append(pd.DataFrame({
-        "organelle": organelle,
-        "index"    : index,
-        "total_true":  total_trues,
-        "total_mean":  total_means,
-        "total_stdv":  total_stdvs,
-        "count_trues": count_trues,
-        "count_means": count_means,
-        "count_stdvs": count_stdvs,
-        "mean_trues":  mean_trues,
-        "mean_means":  mean_means,
-        "mean_stdvs":  mean_stdvs,
-    }))
-    print(f"Finished: {organelle}")
-
-df = pd.concat(dfs,ignore_index=True)
-df.to_csv("plots/rebuttal_error/mcmcMore_25-75.csv",index=False)
+stems = []
+for path in Path("images/cell/EYrainbow_glucose").glob("*.tif"):
+    stems.append(path.stem.partition("_")[2])
+args = pd.DataFrame({
+    "folder_in":  "EYrainbow_glucose",
+    "folder_out": "plots/rebuttal_error/optimization",
+    "stem": stems,
+})
+# %%
+batch_apply(simulate1fov,args)
 
 # %%
 df = pd.read_csv("plots/rebuttal_error/mcmcShankar_25-75.csv")
