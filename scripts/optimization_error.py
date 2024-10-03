@@ -11,7 +11,8 @@ import statsmodels
 import statsmodels.api as sm
 # import pylab
 import seaborn as sns
-
+from pathlib import Path
+from organelle_measure.data import read_results
 
 # %% Define the lowess and confidence interval function
 def lowess_with_confidence_bounds(x, y, eval_x, N=200, conf_interval=0.95, lowess_kw=None):
@@ -116,5 +117,11 @@ for organelle in organelles.keys():
     plt.savefig('{}_cellsize-ratio-noregression.png'.format(organelle), dpi=600)
     plt.clf()
 
+
+# %%
+px_x,px_y,px_z = 0.41,0.41,0.20
+
+subfolders = ["EYrainbow_glucose"]
+df_bycell = read_results(Path("./data"),subfolders,(px_x,px_y,px_z))
 
 # %%
