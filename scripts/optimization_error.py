@@ -14,6 +14,12 @@ import seaborn as sns
 from pathlib import Path
 from organelle_measure.data import read_results
 
+# %%
+def moving_average(a, n=3):
+    ret = np.cumsum(a, dtype=float)
+    ret[n:] = ret[n:] - ret[:-n]
+    return ret[n - 1:] / n
+
 # %% Define the lowess and confidence interval function
 def lowess_with_confidence_bounds(x, y, eval_x, N=200, conf_interval=0.95, lowess_kw=None):
     """
