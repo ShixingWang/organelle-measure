@@ -39,11 +39,11 @@ organelles = [
 ]
 
 experiments = {
-    "glucose":     "EYrainbow_glucose_largerBF",
-    "leucine":     "EYrainbow_leucine_large",
-    "cell size":   "EYrainbowWhi5Up_betaEstrodiol",
-    "PKA pathway": "EYrainbow_1nmpp1_1st",
-    "TOR pathway": "EYrainbow_rapamycin_1stTry"
+    "glucose":     "EYrainbow_glucose",
+    "leucine":     "EYrainbow_leucine",
+    "cell size":   "EYrainbowWhi5Up",
+    "PKA pathway": "EYrainbow_1nmpp1",
+    "TOR pathway": "EYrainbow_rapamycin"
 }
 exp_names = experiments.keys()
 exp_names = list(exp_names)
@@ -75,24 +75,19 @@ units = {
 
 subfolders = [
     "EYrainbow_glucose",
-    "EYrainbow_glucose_largerBF",
-    "EYrainbow_rapamycin_1stTry",
-    "EYrainbow_rapamycin_CheckBistability",
-    "EYrainbow_1nmpp1_1st",
-    "EYrainbow_leucine_large",
+    "EYrainbow_rapamycin",
+    "EYrainbow_1nmpp1",
     "EYrainbow_leucine",
-    "EYrainbowWhi5Up_betaEstrodiol"
+    "EYrainbowWhi5Up"
 ]
 
 # direction in which the growth rate grows.
 extremes = {
-    "EYrainbow_glucose":                    [0.,    100.],
-    "EYrainbow_glucose_largerBF":           [0.,    100.],
-    "EYrainbow_leucine_large":              [0.,    100.],
-    "EYrainbowWhi5Up_betaEstrodiol":        [0.,    10.],
-    "EYrainbow_rapamycin_1stTry":           [1000., 0.],
-    "EYrainbow_rapamycin_CheckBistability": [300.,  0.],
-    "EYrainbow_1nmpp1_1st":                 [3000., 0.]
+    "EYrainbow_glucose":   [0.,    100.],
+    "EYrainbow_leucine":   [0.,    100.],
+    "EYrainbowWhi5Up":     [0.,    10.],
+    "EYrainbow_rapamycin": [1000., 0.],
+    "EYrainbow_1nmpp1":    [3000., 0.]
 }
 
 
