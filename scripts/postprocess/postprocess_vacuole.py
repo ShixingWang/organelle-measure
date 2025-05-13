@@ -126,6 +126,7 @@ def postprocess_vacuole(path_in,path_cell,path_out):
     )
     return None
 
+# %%
 list_i = []
 list_c = []
 list_o = []

@@ -94,5 +94,50 @@ args = pd.DataFrame({
 # %%
 batch_apply(segment_cells,args)
 
+# %%
+list_in = []
+list_out = []
+
+for file_cell in Path(f"./images/cells_raw").glob("*.nd2"):
+    list_in.append(file_cell)
+    file_segm = Path(f"./images/cells_segmented")/f"{file_cell.stem.replace('WT','binCell')}.tif"
+    list_out.append(file_segm)
+args = pd.DataFrame({
+    "path_in":  list_in,
+    "path_out": list_out
+})
+# %%
+batch_apply(segment_cells,args)
+
+# %%
+import h5py
+
+def segment_cells(path_in,path_out):
+    with h5py.File(str(path_in),'r') as f:
+        img_i = f["data"][0,19,:]
+    img_b = yeaz_label(img_i,min_dist=10)
+    # img_b = segmentation.clear_border(img_b)
+    properties = measure.regionprops(img_b)
+    for prop in properties:
+        if prop.area < 50: # hard coded threshold, bad
+            img_b[img_b==prop.label] = 0
+    img_b = measure.label(img_b)
+
+    io.imsave(str(path_out),util.img_as_uint(img_b))
+    print(f"...{path_out}")
+    return None
+
+list_in = []
+list_out = []
+for file_zstack in Path(r"D:\Documents\GitHub\organelle-recognize\images\2025-02-23_Mixed1ColorDiploids\hdf5").glob("*camera*.h5"):
+    list_in.append(file_zstack)
+    list_out.append(Path(r"D:\Documents\GitHub\organelle-recognize\images\2025-02-23_Mixed1ColorDiploids\cells")/f"{file_zstack.stem}.tif")
+args = pd.DataFrame({
+    "path_in":  list_in,
+    "path_out": list_out
+})
+
+# %%
+batch_apply(segment_cells,args)
 
 # %%

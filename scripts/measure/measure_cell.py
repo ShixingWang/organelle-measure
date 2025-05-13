@@ -6,6 +6,11 @@ from organelle_measure.tools import batch_apply
 
 # %%
 def parse_meta_cell(name):
+    fov = name.rpartition("_")[2]
+    return { "fov": fov }
+
+# %%
+def parse_meta_cell(name):
     """name is the stem of the ORGANELLE label image file."""
     if "1nmpp1" in name:
         experiment = "1nmpp1"
@@ -22,6 +27,7 @@ def parse_meta_cell(name):
         "field":      field,
     }
 
+# %%
 def measure1cell(path_in,path_out):
     img_cell = io.imread(str(path_in))
     name = Path(path_in).stem

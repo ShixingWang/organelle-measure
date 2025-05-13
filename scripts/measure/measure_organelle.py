@@ -8,6 +8,11 @@ from batch_apply import batch_apply
 
 # %%
 def parse_meta_organelle(name):
+    fov = name.rpartition("_")[0].rpartition("_")[2]
+    return { "fov":fov, "organelle":"VO" }
+
+# %%
+def parse_meta_organelle(name):
     """name is the stem of the ORGANELLE label image file."""
     organelle = name.partition("-")[2].partition("_")[0]
     if "1nmpp1" in name:
@@ -122,6 +127,7 @@ def parse_meta_organelle(name):
         "field":      field,
     }
 
+# %%
 def measure1organelle(path_in,path_cell,path_out,metadata=None):
     # parse metadata from filename
     name = Path(path_in).stem
